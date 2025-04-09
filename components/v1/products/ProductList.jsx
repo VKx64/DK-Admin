@@ -1,199 +1,39 @@
 "use client";
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import Filters from './Filters'
 import DataTable from './DataTable'
+import Header from './Header'
 import { Button } from '@/components/ui/button'
+import { getProductsWithAllData } from '@/services/pocketbase/readProducts'
 
 const ProductList = () => {
-  // ======= STATE MANAGEMENT =======
-  // Product data with categories and discounts
-  const [productData] = useState([
-    {
-      id: 1,
-      name: "Air Conditioner Model X",
-      stock: 25,
-      price: 299.99,
-      discount: 10,
-      image: "/Images/default_user.jpg",
-      category: "Air Conditioning"
-    },
-    {
-      id: 2,
-      name: "HVAC Filter Premium",
-      stock: 120,
-      price: 34.50,
-      discount: 0,
-      image: "/Images/default_user.jpg",
-      category: "HVAC"
-    },
-    {
-      id: 3,
-      name: "Daikin Sensor Unit",
-      stock: 45,
-      price: 89.99,
-      discount: 5,
-      image: "/Images/default_user.jpg",
-      category: "Control Systems"
-    },
-    {
-      id: 4,
-      name: "Temperature Controller",
-      stock: 18,
-      price: 149.95,
-      discount: 15,
-      image: "/Images/default_user.jpg",
-      category: "Control Systems"
-    },
-    {
-      id: 5,
-      name: "Cooling Fan Assembly",
-      stock: 37,
-      price: 78.50,
-      discount: 0,
-      image: "/Images/default_user.jpg",
-      category: "Ventilation"
-    },
-    {
-      id: 6,
-      name: "Compressor Unit",
-      stock: 12,
-      price: 425.00,
-      discount: 20,
-      image: "/Images/default_user.jpg",
-      category: "HVAC"
-    },
-    {
-      id: 7,
-      name: "Remote Control Device",
-      stock: 65,
-      price: 29.99,
-      discount: 0,
-      image: "/Images/default_user.jpg",
-      category: "Accessories"
-    },
-    {
-      id: 8,
-      name: "Installation Kit",
-      stock: 42,
-      price: 55.25,
-      discount: 10,
-      image: "/Images/default_user.jpg",
-      category: "Accessories"
-    },
-    {
-      id: 9,
-      name: "Wall Mount Bracket",
-      stock: 53,
-      price: 19.95,
-      discount: 0,
-      image: "/Images/default_user.jpg",
-      category: "Accessories"
-    },
-    {
-      id: 10,
-      name: "Maintenance Kit",
-      stock: 31,
-      price: 45.50,
-      discount: 5,
-      image: "/Images/default_user.jpg",
-      category: "Accessories"
-    },
-    {
-      id: 11,
-      name: "Air Purifier Model S",
-      stock: 29,
-      price: 199.99,
-      discount: 15,
-      image: "/Images/default_user.jpg",
-      category: "Air Conditioning"
-    },
-    {
-      id: 12,
-      name: "Humidifier Premium",
-      stock: 47,
-      price: 129.95,
-      discount: 10,
-      image: "/Images/default_user.jpg",
-      category: "Air Conditioning"
-    },
-    {
-      id: 13,
-      name: "Smart Thermostat",
-      stock: 82,
-      price: 159.99,
-      discount: 0,
-      image: "/Images/default_user.jpg",
-      category: "Control Systems"
-    },
-    {
-      id: 14,
-      name: "Heat Exchanger",
-      stock: 15,
-      price: 245.00,
-      discount: 12,
-      image: "/Images/default_user.jpg",
-      category: "HVAC"
-    },
-    {
-      id: 15,
-      name: "Condenser Unit",
-      stock: 24,
-      price: 375.50,
-      discount: 18,
-      image: "/Images/default_user.jpg",
-      category: "HVAC"
-    },
-    {
-      id: 16,
-      name: "Air Filter Pack",
-      stock: 95,
-      price: 22.49,
-      discount: 0,
-      image: "/Images/default_user.jpg",
-      category: "Accessories"
-    },
-    {
-      id: 17,
-      name: "Refrigerant R-410A",
-      stock: 38,
-      price: 89.75,
-      discount: 5,
-      image: "/Images/default_user.jpg",
-      category: "HVAC"
-    },
-    {
-      id: 18,
-      name: "Ventilation System",
-      stock: 19,
-      price: 269.99,
-      discount: 10,
-      image: "/Images/default_user.jpg",
-      category: "Ventilation"
-    },
-    {
-      id: 19,
-      name: "Control Board Assembly",
-      stock: 27,
-      price: 124.50,
-      discount: 0,
-      image: "/Images/default_user.jpg",
-      category: "Control Systems"
-    },
-    {
-      id: 20,
-      name: "WiFi Extension Module",
-      stock: 51,
-      price: 49.95,
-      discount: 10,
-      image: "/Images/default_user.jpg",
-      category: "Accessories"
-    }
-  ])
+  // State for product data
+  const [productData, setProductData] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // State for pagination
+  const [page, setPage] = useState(1)
+  const [perPage] = useState(20)
+  const [totalPages, setTotalPages] = useState(0)
 
   // State for filtering and sorting
   const [searchQuery, setSearchQuery] = useState("")
   const [priceSort, setPriceSort] = useState("")
+  const [stockSort, setStockSort] = useState("")
+  const [discountSort, setDiscountSort] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
+
+  // Extract unique categories from product data
+  const uniqueCategories = useMemo(() => {
+    const categories = new Set();
+    productData.forEach(product => {
+      if (product.category) {
+        categories.add(product.category);
+      }
+    });
+    return Array.from(categories).sort();
+  }, [productData]);
 
   // State for table row selection
   const [rowSelection, setRowSelection] = useState({})
@@ -201,43 +41,100 @@ const ProductList = () => {
   // State for storing the table instance
   const [tableInstance, setTableInstance] = useState(null)
 
-  // ======= DATA PROCESSING =======
-  // Step 1: Filter data based on search query and category
-  const filteredProducts = useMemo(() => {
-    return productData.filter(product => {
-      // Check if product name matches search query
-      const nameMatches =
-        searchQuery === "" ||
-        product.name.toLowerCase().includes(searchQuery.toLowerCase());
+  // Flag to force refresh data (after create/update/delete operations)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-      // Check if product belongs to selected category
-      const categoryMatches =
-        selectedCategory === "" ||
-        product.category === selectedCategory;
+  // Fetch product data directly from the service
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch products with their relations using our simplified function
+        const result = await getProductsWithAllData(page, perPage, searchQuery);
 
-      // Product must match both conditions
-      return nameMatches && categoryMatches;
-    });
-  }, [productData, searchQuery, selectedCategory]);
+        // Transform data for the table
+        const transformedData = result.items.map(product => ({
+          id: product.id,
+          name: product.product_name,
+          model: product.product_model,
+          brand: product.brand,
+          stock: product.stock?.stock_quantity || 0,
+          price: product.pricing?.final_price || 0,
+          basePrice: product.pricing?.base_price || 0,
+          discount: product.pricing?.discount || 0,
+          image: product.image ? `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/${product.collectionId}/${product.id}/${product.image}` : "/Images/default_user.jpg",
+          category: product.brand, // Using brand as category for now
+          specifications: product.specifications || null,
+          warranty: product.warranty || null,
+        }));
 
-  // Step 2: Sort filtered data by price if needed
-  const sortedProducts = useMemo(() => {
-    // If no sorting is applied, just return filtered data
-    if (!priceSort) return filteredProducts;
-
-    // Create a copy to avoid mutating the original data
-    return [...filteredProducts].sort((a, b) => {
-      if (priceSort === 'lowToHigh') {
-        return a.price - b.price; // Sort from lowest price to highest
-      } else {
-        return b.price - a.price; // Sort from highest price to lowest
+        setProductData(transformedData);
+        setTotalPages(result.totalPages);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
-    });
-  }, [filteredProducts, priceSort]);
+    };
+
+    fetchProducts();
+  }, [page, perPage, searchQuery, refreshTrigger]);
+
+  // Client-side filtering based on category
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategory) return productData;
+
+    return productData.filter(product =>
+      product.category === selectedCategory
+    );
+  }, [productData, selectedCategory]);
+
+  // Client-side sorting based on price, stock, and discount
+  const sortedProducts = useMemo(() => {
+    let result = [...filteredProducts];
+
+    // Apply price sorting
+    if (priceSort) {
+      result = result.sort((a, b) => {
+        if (priceSort === 'lowToHigh') {
+          return a.price - b.price;
+        } else {
+          return b.price - a.price;
+        }
+      });
+    }
+
+    // Apply stock sorting
+    if (stockSort) {
+      result = result.sort((a, b) => {
+        if (stockSort === 'lowToHigh') {
+          return a.stock - b.stock;
+        } else {
+          return b.stock - a.stock;
+        }
+      });
+    }
+
+    // Apply discount sorting
+    if (discountSort) {
+      result = result.sort((a, b) => {
+        if (discountSort === 'lowToHigh') {
+          return a.discount - b.discount;
+        } else {
+          return b.discount - a.discount;
+        }
+      });
+    }
+
+    return result;
+  }, [filteredProducts, priceSort, stockSort, discountSort]);
 
   // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
+    // Reset to first page when searching
+    setPage(1);
   };
 
   // Store table instance from the DataTable component
@@ -245,68 +142,136 @@ const ProductList = () => {
     setTableInstance(table);
   };
 
-  // ======= RENDER UI =======
+  // Handle product data changes (create/update/delete)
+  const handleDataChanged = () => {
+    // Reset row selection
+    setRowSelection({});
+    // Force refresh by incrementing the trigger value
+    setRefreshTrigger(prev => prev + 1);
+    // Reset to first page when data changes
+    setPage(1);
+  };
+
+  // Handle page navigation
+  const handlePreviousPage = () => {
+    if (page > 1) setPage(page - 1);
+  };
+
+  const handleNextPage = () => {
+    if (page < totalPages) setPage(page + 1);
+  };
+
+  // RENDER UI
   return (
-    <div className='w-full flex-1 bg-white rounded-sm shadow-sm p-4 flex flex-col gap-4 overflow-hidden'>
-      {/* Filter component for search, sorting and filtering */}
-      <Filters
-        searchQuery={searchQuery}
+    <div className='w-full flex-1 flex flex-col gap-4'>
+      {/* Header with Add Product button */}
+      <Header
         onSearchChange={handleSearchChange}
-        onPriceSortChange={setPriceSort}
-        onCategoryChange={setSelectedCategory}
+        onProductAdded={handleDataChanged}
+        onRefresh={handleDataChanged}
       />
 
-      {/* Divider line */}
-      <div className='w-full h-[1px] bg-black/10' />
+      <div className='w-full bg-white rounded-sm shadow-sm p-4 flex flex-col gap-4 overflow-hidden'>
+        {/* Filter component for search, sorting and filtering */}
+        <Filters
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onPriceSortChange={(value) => {
+            setPriceSort(value);
+            // Clear other sorts to avoid conflicts
+            setStockSort("");
+            setDiscountSort("");
+            setPage(1); // Reset to first page when changing sort
+          }}
+          onStockSortChange={(value) => {
+            setStockSort(value);
+            // Clear other sorts to avoid conflicts
+            setPriceSort("");
+            setDiscountSort("");
+            setPage(1); // Reset to first page when changing sort
+          }}
+          onDiscountSortChange={(value) => {
+            setDiscountSort(value);
+            // Clear other sorts to avoid conflicts
+            setPriceSort("");
+            setStockSort("");
+            setPage(1); // Reset to first page when changing sort
+          }}
+          onCategoryChange={(value) => {
+            setSelectedCategory(value);
+            setPage(1); // Reset to first page when changing category
+          }}
+          uniqueCategories={uniqueCategories}
+        />
 
-      {/* Use the DataTable component and get access to the table instance */}
-      <DataTable
-        data={sortedProducts}
-        rowSelection={rowSelection}
-        setRowSelection={setRowSelection}
-        onTableReady={handleTableReady}
-      />
+        {/* Divider line */}
+        <div className='w-full h-[1px] bg-black/10' />
 
-      {/* Pagination Controls - Moved from DataTable to ProductList */}
-      {tableInstance && (
-        <div className="flex items-center justify-between">
-          {/* Selection counter */}
-          <div className="flex-1 text-sm text-muted-foreground font-raleway">
-            {tableInstance.getFilteredSelectedRowModel().rows.length} of{" "}
-            {tableInstance.getFilteredRowModel().rows.length} row(s) selected.
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
           </div>
+        )}
 
-          {/* Page navigation */}
-          <div className="flex items-center space-x-6">
+        {/* Error state */}
+        {error && (
+          <div className="flex justify-center items-center py-10 text-red-500">
+            Error: {error}
+          </div>
+        )}
 
-            {/* Page counter */}
-            <span className="text-sm text-muted-foreground font-raleway">
-              Page {tableInstance.getState().pagination.pageIndex + 1} of{" "}
-              {tableInstance.getPageCount()}
-            </span>
+        {/* Use the DataTable component with CRUD functionality */}
+        {!isLoading && !error && (
+          <DataTable
+            data={sortedProducts}
+            rowSelection={rowSelection}
+            setRowSelection={setRowSelection}
+            onTableReady={handleTableReady}
+            onDataChanged={handleDataChanged}
+          />
+        )}
 
-            {/* Pagination buttons */}
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => tableInstance.previousPage()}
-                disabled={!tableInstance.getCanPreviousPage()}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => tableInstance.nextPage()}
-                disabled={!tableInstance.getCanNextPage()}
-              >
-                Next
-              </Button>
+        {/* Pagination Controls */}
+        {!isLoading && !error && (
+          <div className="flex items-center justify-between">
+            {/* Selection counter */}
+            <div className="flex-1 text-sm text-muted-foreground font-raleway">
+              {tableInstance?.getFilteredSelectedRowModel().rows.length || 0} of{" "}
+              {sortedProducts.length} row(s) selected.
+            </div>
+
+            {/* Page navigation */}
+            <div className="flex items-center space-x-6">
+
+              {/* Page counter */}
+              <span className="text-sm text-muted-foreground font-raleway">
+                Page {page} of {totalPages || 1}
+              </span>
+
+              {/* Pagination buttons */}
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={page <= 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
