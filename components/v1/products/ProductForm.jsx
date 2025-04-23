@@ -242,18 +242,22 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger
                 value="pricing"
+                disabled={!isBasicInfoComplete}
                 className={!isBasicInfoComplete ? "opacity-50 cursor-not-allowed" : ""}
               >Pricing</TabsTrigger>
               <TabsTrigger
                 value="specifications"
+                disabled={!isBasicInfoComplete}
                 className={!isBasicInfoComplete ? "opacity-50 cursor-not-allowed" : ""}
               >Specifications</TabsTrigger>
               <TabsTrigger
                 value="stock"
+                disabled={!isBasicInfoComplete}
                 className={!isBasicInfoComplete ? "opacity-50 cursor-not-allowed" : ""}
               >Stock</TabsTrigger>
               <TabsTrigger
                 value="warranty"
+                disabled={!isBasicInfoComplete}
                 className={!isBasicInfoComplete ? "opacity-50 cursor-not-allowed" : ""}
               >Warranty</TabsTrigger>
             </TabsList>
@@ -531,7 +535,8 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
           <DialogFooter className="mt-6">
             {/* Navigation buttons */}
             <div className="mr-auto flex gap-2">
-              {activeTab !== "basic" && (
+              {/* Only show Previous button when creating a new product (not when editing) */}
+              {activeTab !== "basic" && !productData && (
                 <Button
                   type="button"
                   variant="outline"
@@ -544,7 +549,8 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
                   Previous
                 </Button>
               )}
-              {activeTab !== "warranty" && (
+              {/* Only show Next button when creating a new product (not when editing) */}
+              {activeTab !== "warranty" && !productData && (
                 <Button
                   type="button"
                   onClick={() => {

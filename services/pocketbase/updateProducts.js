@@ -5,8 +5,11 @@ import { pb } from "../../lib/pocketbase";
 // Updates just the main product record's fields
 export async function updateBasicProduct(id, productData) {
   try {
+    console.log(`Updating basic product ${id} with data:`, productData);
+
     // Update the product with the new data
     const updatedProduct = await pb.collection("products").update(id, productData);
+    console.log('Product updated successfully:', updatedProduct);
 
     return {
       success: true,
@@ -27,6 +30,8 @@ export async function updateBasicProduct(id, productData) {
 // Updates the main product and any provided related data (pricing, specs, stock, warranty)
 export async function updateProductWithAllData(id, productData, relatedData = {}) {
   try {
+    console.log(`Updating product ${id} with data:`, { productData, relatedData });
+
     // Keep track of all updates for the result
     const updates = {};
 
@@ -34,6 +39,7 @@ export async function updateProductWithAllData(id, productData, relatedData = {}
     if (Object.keys(productData).length > 0) {
       const updatedProduct = await pb.collection("products").update(id, productData);
       updates.product = updatedProduct;
+      console.log('Main product record updated:', updatedProduct);
     }
 
     // 2. Update or create related records if provided
@@ -44,20 +50,24 @@ export async function updateProductWithAllData(id, productData, relatedData = {}
         // First try to find existing pricing record
         const existingPricing = await pb.collection("product_pricing")
           .getFirstListItem(`product_id="${id}"`);
+        console.log('Found existing pricing record:', existingPricing);
 
         // Update existing record
         const updatedPricing = await pb.collection("product_pricing")
           .update(existingPricing.id, relatedData.pricing);
+        console.log('Updated pricing record:', updatedPricing);
 
         updates.pricing = updatedPricing;
       } catch (err) {
         // No pricing record found, create a new one
+        console.log('No existing pricing record found, creating new one');
         const pricingData = {
           ...relatedData.pricing,
           product_id: id
         };
 
         const newPricing = await pb.collection("product_pricing").create(pricingData);
+        console.log('Created new pricing record:', newPricing);
         updates.pricing = newPricing;
       }
     }
@@ -133,6 +143,8 @@ export async function updateProductWithAllData(id, productData, relatedData = {}
         updates.warranty = newWarranty;
       }
     }
+
+    console.log('All updates completed:', updates);
 
     // Return result with all updated data
     return {

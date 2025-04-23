@@ -3,12 +3,12 @@ import { Icon } from "@iconify/react";
 import React, { useState } from "react";
 import SearchBar from "../SearchBar";
 import { Button } from "@/components/ui/button";
-import ProductForm from "./ProductForm";
-import { RefreshCw } from "lucide-react"; // Import the Lucide React refresh icon
+import { RefreshCw } from "lucide-react";
+import OrderForm from "./OrderForm";
 
-const Header = ({ onSearchChange, onProductAdded, onRefresh }) => {
-  // State to control the product form dialog
-  const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+const Header = ({ onSearchChange, onOrderAdded, onRefresh }) => {
+  // State to control the order form dialog
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
   // State to handle refresh button loading state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -28,16 +28,16 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh }) => {
   };
 
   return (
-    <>
+    <div>
       <div className="w-full bg-white shadow-sm p-4 rounded-sm flex flex-row justify-between">
         {/* Header Text and Icon */}
         <div className="flex flex-row gap-3 items-center w-fit">
           <Icon
-            icon="mingcute:air-condition-open-line"
-            className="text-4xl text-[#1E1E1E]"
+            icon="material-symbols:order-approve-outline"
+            className="text-3xl text-[#1E1E1E]"
           />
           <h1 className="font-raleway font-semibold text-2xl text-[#1E1E1E]">
-            Product Management
+            Order Management
           </h1>
         </div>
 
@@ -50,7 +50,6 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh }) => {
             onClick={handleRefresh}
             disabled={isRefreshing}
           >
-            {/* Use the Lucide React component directly instead of Icon component */}
             <RefreshCw
               className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
             />
@@ -58,28 +57,28 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh }) => {
           <Button
             size={"lg"}
             className={"bg-[#5CCFBC]"}
-            onClick={() => setIsProductFormOpen(true)}
+            onClick={() => setIsOrderFormOpen(true)}
           >
-            <Icon icon="mingcute:add-line" className="size-6" /> Add Product
+            <Icon icon="mingcute:add-line" className="size-6" /> New Order
           </Button>
         </div>
       </div>
 
-      {/* Product Form Dialog */}
-      <ProductForm
-        isOpen={isProductFormOpen}
-        onClose={() => setIsProductFormOpen(false)}
-        onSuccess={(newProduct) => {
+      {/* Order Form Dialog */}
+      <OrderForm
+        isOpen={isOrderFormOpen}
+        onClose={() => setIsOrderFormOpen(false)}
+        onSuccess={(newOrder) => {
           // Close the form
-          setIsProductFormOpen(false);
+          setIsOrderFormOpen(false);
 
-          // Pass the event up to refresh the product list
-          if (onProductAdded) {
-            onProductAdded(newProduct);
+          // Pass the event up to refresh the order list
+          if (onOrderAdded) {
+            onOrderAdded(newOrder);
           }
         }}
       />
-    </>
+    </div>
   );
 };
 

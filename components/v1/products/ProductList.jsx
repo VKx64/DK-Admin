@@ -2,11 +2,10 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import Filters from './Filters'
 import DataTable from './DataTable'
-import Header from './Header'
 import { Button } from '@/components/ui/button'
 import { getProductsWithAllData } from '@/services/pocketbase/readProducts'
 
-const ProductList = () => {
+const ProductList = ({ searchQuery = "", onDataChanged }) => {
   // State for product data
   const [productData, setProductData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -18,7 +17,6 @@ const ProductList = () => {
   const [totalPages, setTotalPages] = useState(0)
 
   // State for filtering and sorting
-  const [searchQuery, setSearchQuery] = useState("")
   const [priceSort, setPriceSort] = useState("")
   const [stockSort, setStockSort] = useState("")
   const [discountSort, setDiscountSort] = useState("")
@@ -130,13 +128,6 @@ const ProductList = () => {
     return result;
   }, [filteredProducts, priceSort, stockSort, discountSort]);
 
-  // Handle search input change
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    // Reset to first page when searching
-    setPage(1);
-  };
-
   // Store table instance from the DataTable component
   const handleTableReady = (table) => {
     setTableInstance(table);
@@ -150,6 +141,11 @@ const ProductList = () => {
     setRefreshTrigger(prev => prev + 1);
     // Reset to first page when data changes
     setPage(1);
+
+    // Notify parent component if callback provided
+    if (onDataChanged) {
+      onDataChanged();
+    }
   };
 
   // Handle page navigation
@@ -164,18 +160,11 @@ const ProductList = () => {
   // RENDER UI
   return (
     <div className='w-full flex-1 flex flex-col gap-4'>
-      {/* Header with Add Product button */}
-      <Header
-        onSearchChange={handleSearchChange}
-        onProductAdded={handleDataChanged}
-        onRefresh={handleDataChanged}
-      />
-
       <div className='w-full bg-white rounded-sm shadow-sm p-4 flex flex-col gap-4 overflow-hidden'>
         {/* Filter component for search, sorting and filtering */}
         <Filters
           searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
+          onSearchChange={() => {}} // This is now handled by the parent
           onPriceSortChange={(value) => {
             setPriceSort(value);
             // Clear other sorts to avoid conflicts

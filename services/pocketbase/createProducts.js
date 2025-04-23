@@ -5,8 +5,11 @@ import { pb } from "../../lib/pocketbase";
 // This creates just the main product record
 export async function createBasicProduct(productData) {
   try {
+    console.log('Creating basic product with data:', productData);
+
     // Create the product record with basic information
     const newProduct = await pb.collection("products").create(productData);
+    console.log('New product created:', newProduct);
 
     return {
       success: true,
@@ -27,8 +30,15 @@ export async function createBasicProduct(productData) {
 // This creates the product with all its related data (pricing, specs, stock, warranty)
 export async function createProductWithAllData(productData, relatedData = {}) {
   try {
+    console.log('Creating complete product with data:', {
+      productData,
+      relatedData
+    });
+
     // 1. First create the base product
     const newProduct = await pb.collection("products").create(productData);
+    console.log('Base product created:', newProduct);
+
     const productId = newProduct.id;
 
     // Keep track of created related records
@@ -46,8 +56,10 @@ export async function createProductWithAllData(productData, relatedData = {}) {
           ...relatedData.pricing,
           product_id: productId
         };
+        console.log('Creating pricing record with data:', pricingData);
 
         const pricing = await pb.collection("product_pricing").create(pricingData);
+        console.log('Pricing record created:', pricing);
         createdRecords.pricing = pricing;
       } catch (err) {
         console.error("Error creating pricing data:", err);
@@ -62,8 +74,10 @@ export async function createProductWithAllData(productData, relatedData = {}) {
           ...relatedData.specifications,
           product_id: productId
         };
+        console.log('Creating specifications record with data:', specsData);
 
         const specs = await pb.collection("product_specifications").create(specsData);
+        console.log('Specifications record created:', specs);
         createdRecords.specifications = specs;
       } catch (err) {
         console.error("Error creating specifications data:", err);
@@ -77,8 +91,10 @@ export async function createProductWithAllData(productData, relatedData = {}) {
           ...relatedData.stock,
           product_id: productId
         };
+        console.log('Creating stock record with data:', stockData);
 
         const stock = await pb.collection("product_stocks").create(stockData);
+        console.log('Stock record created:', stock);
         createdRecords.stock = stock;
       } catch (err) {
         console.error("Error creating stock data:", err);
@@ -92,13 +108,17 @@ export async function createProductWithAllData(productData, relatedData = {}) {
           ...relatedData.warranty,
           product_id: productId
         };
+        console.log('Creating warranty record with data:', warrantyData);
 
         const warranty = await pb.collection("product_warranty").create(warrantyData);
+        console.log('Warranty record created:', warranty);
         createdRecords.warranty = warranty;
       } catch (err) {
         console.error("Error creating warranty data:", err);
       }
     }
+
+    console.log('All related records created:', createdRecords);
 
     // Return the created product and its related records
     return {
@@ -120,6 +140,8 @@ export async function createProductWithAllData(productData, relatedData = {}) {
 // Useful for adding just pricing, specifications, stock, or warranty to an existing product
 export async function addProductRelatedData(productId, dataType, data) {
   try {
+    console.log(`Adding ${dataType} data to product ${productId} with data:`, data);
+
     // Determine which collection to add to based on dataType
     let collectionName;
     switch (dataType.toLowerCase()) {
@@ -146,12 +168,14 @@ export async function addProductRelatedData(productId, dataType, data) {
     try {
       await pb.collection(collectionName).getFirstListItem(`product_id="${productId}"`);
       // If we reach here, a record exists, so we return false
+      console.log(`A ${dataType} record already exists for product ${productId}.`);
       return {
         success: false,
         message: `A ${dataType} record already exists for this product. Use update instead.`
       };
     } catch (err) {
       // No record found, so we can create a new one - this is expected
+      console.log(`No existing ${dataType} record found for product ${productId}. Proceeding to create.`);
     }
 
     // Add the product_id to connect it to the main product
@@ -162,6 +186,7 @@ export async function addProductRelatedData(productId, dataType, data) {
 
     // Create the record
     const newRecord = await pb.collection(collectionName).create(recordData);
+    console.log(`${dataType} record created successfully for product ${productId}:`, newRecord);
 
     return {
       success: true,

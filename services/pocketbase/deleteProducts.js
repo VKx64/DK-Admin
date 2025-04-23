@@ -5,15 +5,20 @@ import { pb } from "../../lib/pocketbase";
 // This function removes a product and all its related records from other collections
 export async function deleteProductWithAllData(id) {
   try {
+    console.log(`Deleting product with ID: ${id} and all its related data`);
+
     // First, delete all related records in other collections
     try {
       // Find and delete any related pricing records
       const pricingRecord = await pb.collection("product_pricing")
         .getFirstListItem(`product_id="${id}"`);
       if (pricingRecord) {
+        console.log(`Found pricing record ${pricingRecord.id}, deleting...`);
         await pb.collection("product_pricing").delete(pricingRecord.id);
+        console.log('Pricing record deleted successfully');
       }
     } catch (err) {
+      console.log('No pricing record found to delete');
       // No pricing record found, continue with other deletions
     }
 
@@ -51,7 +56,9 @@ export async function deleteProductWithAllData(id) {
     }
 
     // Finally, delete the main product record
+    console.log(`Deleting main product record: ${id}`);
     await pb.collection("products").delete(id);
+    console.log('Main product record deleted successfully');
 
     return {
       success: true,
