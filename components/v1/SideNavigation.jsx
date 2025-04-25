@@ -32,6 +32,7 @@ const SideNavigation = () => {
         <ItemNavigation icon={"mingcute:air-condition-open-line"} text={"Products"} isActive={isActive('Products')}/>
         <ItemNavigation icon={"mingcute:user-heart-line"} text={"Customers"} isActive={isActive('Customers')}/>
         <ItemNavigation icon={"mingcute:user-setting-line"} text={"Technicians"} isActive={isActive('Technicians')}/>
+        <ItemNavigation icon={"mingcute:user-setting-line"} text={"Service"} isActive={isActive('Service')}/>
       </div>
 
       {/* Divider */}

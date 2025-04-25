@@ -1,10 +1,11 @@
 "use client";
 import { Icon } from "@iconify/react";
 import React, { useState } from "react";
+import SearchBar from "../SearchBar";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 
-const Header = ({ onRefresh }) => {
+const Header = ({ onSearchChange, onRefresh }) => {
   // State to handle refresh button loading state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -29,16 +30,20 @@ const Header = ({ onRefresh }) => {
         {/* Header Text and Icon */}
         <div className="flex flex-row gap-3 items-center w-fit">
           <Icon
-            icon="mdi:worker"
+            icon="carbon:customer-service"
             className="text-4xl text-[#1E1E1E]"
           />
           <h1 className="font-raleway font-semibold text-2xl text-[#1E1E1E]">
-            Technician Management
+            Customer Service
           </h1>
         </div>
 
-        {/* Refresh Button */}
+        {/* Search bar and Refresh Button */}
         <div className="flex flex-row gap-3">
+          <SearchBar
+            onChange={onSearchChange}
+            placeholder="Search service requests..."
+          />
           <Button
             size={"lg"}
             variant={"outline"}
