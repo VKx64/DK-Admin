@@ -10,7 +10,15 @@ import {
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { Edit, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react'
+import { Edit, Trash2, Eye, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   useReactTable,
   getCoreRowModel,
@@ -149,12 +157,20 @@ const DataTable = ({
       header: () => <div className="text-left font-medium">Status</div>,
       cell: ({ row }) => {
         const status = row.getValue("status");
+        const statusColorMap = {
+          'Pending': 'bg-yellow-100 text-yellow-800',
+          'Approved': 'bg-green-100 text-green-800',
+          'Declined': 'bg-red-100 text-red-800',
+          'packing': 'bg-blue-100 text-blue-800',
+          'ready_for_delivery': 'bg-indigo-100 text-indigo-800',
+          'ready_for_pickup': 'bg-purple-100 text-purple-800',
+          'on_the_way': 'bg-cyan-100 text-cyan-800',
+          'completed': 'bg-emerald-100 text-emerald-800'
+        };
+
         return (
           <div className={`text-left py-1 px-2 rounded-full w-fit text-xs font-medium
-            ${status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-              status === 'Approved' ? 'bg-green-100 text-green-800' :
-              status === 'Declined' ? 'bg-red-100 text-red-800' :
-              'bg-gray-100 text-gray-800'}`}>
+            ${statusColorMap[status] || 'bg-gray-100 text-gray-800'}`}>
             {status}
           </div>
         );
@@ -189,7 +205,11 @@ const DataTable = ({
       id: "actions",
       header: () => <div className="text-right font-medium">Actions</div>,
       cell: ({ row }) => {
-        const status = row.original.status;
+        const order = row.original;
+        const status = order.status;
+        const paymentMethod = order.mode_of_payment;
+        const availableStatuses = getAvailableStatuses(paymentMethod, status);
+
         return (
           <div className="flex gap-2 justify-end">
             {/* View Order Details */}
@@ -197,48 +217,49 @@ const DataTable = ({
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => handleViewOrder(row.original)}
+              onClick={() => handleViewOrder(order)}
             >
               <Eye className="h-4 w-4" />
             </Button>
 
-            {/* Approve button - only show for pending orders */}
-            {status === 'Pending' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-green-600 hover:text-green-800 hover:bg-green-50"
-                onClick={() => handleStatusConfirmation('Approved', row.original)}
-              >
-                <CheckCircle className="h-4 w-4" />
-              </Button>
-            )}
-
-            {/* Decline button - only show for pending orders */}
-            {status === 'Pending' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
-                onClick={() => handleStatusConfirmation('Declined', row.original)}
-              >
-                <XCircle className="h-4 w-4" />
-              </Button>
-            )}
+            {/* Status Update Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                >
+                  Update Status <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-40">
+                {availableStatuses.map((statusOption) => (
+                  status !== statusOption && (
+                    <DropdownMenuItem
+                      key={statusOption}
+                      onClick={() => handleStatusConfirmation(statusOption, order)}
+                    >
+                      {statusOption}
+                    </DropdownMenuItem>
+                  )
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Delete button */}
             <Button
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => handleDeleteConfirmation(row.original)}
+              onClick={() => handleDeleteConfirmation(order)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         );
       },
-      size: 120,
+      size: 180,
     },
   ];
 
@@ -350,6 +371,16 @@ const DataTable = ({
         orderId: selectedRows.map(row => row.original.id)
       });
     }
+  };
+
+  // Function to get available status options based on payment method
+  const getAvailableStatuses = (paymentMethod, currentStatus) => {
+    if (paymentMethod === "Cash On Delivery") {
+      return ["Pending", "Declined", "Approved", "packing", "ready_for_delivery", "on_the_way", "completed"];
+    } else if (paymentMethod === "On-Store") {
+      return ["Pending", "Declined", "Approved", "ready_for_pickup"];
+    }
+    return ["Pending", "Declined", "Approved"]; // Default options
   };
 
   // Execute status update
@@ -533,7 +564,9 @@ const DataTable = ({
               className={`${
                 statusDialog.newStatus === 'Approved'
                   ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-red-600 hover:bg-red-700'
+                  : statusDialog.newStatus === 'Declined'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
               } text-white`}
             >
               {isUpdatingStatus ? "Updating..." : "Confirm"}

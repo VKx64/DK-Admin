@@ -28,7 +28,16 @@ export async function updateOrderStatus(orderId, newStatus) {
     console.log(`Updating order ${orderId} status to: ${newStatus}`);
 
     // Validate status
-    const validStatuses = ["Pending", "Approved", "Declined"];
+    const validStatuses = [
+      "Pending",
+      "Declined",
+      "Approved",
+      "packing",
+      "ready_for_delivery",
+      "on_the_way",
+      "completed",
+      "ready_for_pickup"
+    ];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`Invalid status: ${newStatus}. Must be one of: ${validStatuses.join(", ")}`);
     }
@@ -61,7 +70,16 @@ export async function updateBatchOrdersStatus(orderIds, newStatus) {
       throw new Error("No valid order IDs provided");
     }
 
-    const validStatuses = ["Pending", "Approved", "Declined"];
+    const validStatuses = [
+      "Pending",
+      "Declined",
+      "Approved",
+      "packing",
+      "ready_for_delivery",
+      "on_the_way",
+      "completed",
+      "ready_for_pickup"
+    ];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`Invalid status: ${newStatus}. Must be one of: ${validStatuses.join(", ")}`);
     }

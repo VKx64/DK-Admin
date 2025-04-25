@@ -20,7 +20,7 @@ import { pb } from '@/lib/pocketbase';
 
 /**
  * EditTechnician - Component for editing technician information in a dialog
- * 
+ *
  * @param {Object} props
  * @param {boolean} props.open - Whether the dialog is open
  * @param {Function} props.onOpenChange - Function to call when dialog open state changes
@@ -38,7 +38,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
     email: '',
     role: 'technician',
     verified: false,
-    
+
     // Technician details
     job_title: '',
     specialization: '',
@@ -75,7 +75,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
         email: technician.email || '',
         role: technician.role || 'technician',
         verified: technician.verified || false,
-        
+
         job_title: techDetails.job_title || '',
         specialization: techDetails.specialization || '',
         years_of_experience: techDetails.years_of_experience || '',
@@ -117,7 +117,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
 
     // Create preview URL
     const previewUrl = URL.createObjectURL(file);
-    
+
     if (fileType === 'resume') {
       setResumeFile(file);
       setResumePreview(previewUrl);
@@ -148,15 +148,15 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
       // Create FormData for file uploads if needed
       if (avatarFile) {
         const formDataWithAvatar = new FormData();
-        
+
         // Add basic fields
         for (const [key, value] of Object.entries(userData)) {
           formDataWithAvatar.append(key, value);
         }
-        
+
         // Add avatar file
         formDataWithAvatar.append('avatar', avatarFile);
-        
+
         // Update user with avatar
         await pb.collection('users').update(technician.id, formDataWithAvatar);
       } else {
@@ -178,15 +178,15 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
         // Create FormData for resume file upload if needed
         if (resumeFile) {
           const techFormData = new FormData();
-          
+
           // Add basic fields
           for (const [key, value] of Object.entries(techData)) {
             techFormData.append(key, value);
           }
-          
+
           // Add resume file
           techFormData.append('resume_image', resumeFile);
-          
+
           // Update technician details with resume
           await pb.collection('technician_details').update(techDetailsId, techFormData);
         } else {
@@ -206,20 +206,20 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
 
         // Create FormData for resume file upload if needed
         const techFormData = new FormData();
-        
+
         // Add basic fields
         for (const [key, value] of Object.entries(techData)) {
           techFormData.append(key, value);
         }
-        
+
         // Add resume file if it exists
         if (resumeFile) {
           techFormData.append('resume_image', resumeFile);
         }
-        
+
         // Create new technician details
         const newTechDetails = await pb.collection('technician_details').create(techFormData);
-        
+
         // Link technician details to user
         await pb.collection('users').update(technician.id, {
           technician_details: newTechDetails.id
@@ -233,7 +233,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
 
       // Close dialog
       onOpenChange(false);
-      
+
     } catch (err) {
       console.error('Error updating technician:', err);
       setError(err.message || 'Failed to update technician');
@@ -253,25 +253,25 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
             Update the technician information below.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit}>
           {/* Avatar upload */}
           <div className="flex items-center gap-4 pb-4">
             <div className="h-16 w-16 relative rounded-full overflow-hidden border-2 border-gray-200 group">
-              <Image 
-                src={avatarPreview} 
+              <Image
+                src={avatarPreview}
                 alt="Avatar"
                 fill
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <label 
-                  htmlFor="avatar-upload" 
+                <label
+                  htmlFor="avatar-upload"
                   className="cursor-pointer text-white"
                 >
                   <Upload className="h-6 w-6" />
                 </label>
-                <input 
+                <input
                   id="avatar-upload"
                   type="file"
                   className="hidden"
@@ -285,7 +285,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
               <p className="text-sm text-gray-500">Click on the image to change</p>
             </div>
           </div>
-          
+
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="profile" className="flex items-center gap-1">
@@ -298,13 +298,13 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                 <Clock className="h-4 w-4" /> Availability
               </TabsTrigger>
             </TabsList>
-            
+
             {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-4">
               <div className="space-y-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input 
+                  <Input
                     id="name"
                     name="name"
                     value={formData.name}
@@ -312,10 +312,10 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                     placeholder="John Smith"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input 
+                  <Input
                     id="email"
                     name="email"
                     type="email"
@@ -324,7 +324,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                     placeholder="john@example.com"
                   />
                 </div>
-                
+
                 {/* Resume Document Upload */}
                 <div className="grid gap-2">
                   <Label htmlFor="resume">Resume Document</Label>
@@ -338,8 +338,8 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                           className="object-cover"
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                          <label 
-                            htmlFor="resume-upload" 
+                          <label
+                            htmlFor="resume-upload"
                             className="cursor-pointer text-white bg-black bg-opacity-50 px-3 py-1.5 rounded-md flex items-center gap-1"
                           >
                             <Upload className="h-4 w-4" /> Change Resume
@@ -347,7 +347,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                         </div>
                       </div>
                     ) : (
-                      <label 
+                      <label
                         htmlFor="resume-upload"
                         className="flex flex-col items-center justify-center h-32 gap-2 cursor-pointer text-gray-500"
                       >
@@ -355,7 +355,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                         <span>Click to upload resume</span>
                       </label>
                     )}
-                    <input 
+                    <input
                       id="resume-upload"
                       type="file"
                       className="hidden"
@@ -366,13 +366,13 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Technical Tab */}
             <TabsContent value="technical" className="space-y-4">
               <div className="space-y-4">
                 <div className="grid gap-2">
                   <Label htmlFor="job_title">Job Title</Label>
-                  <Input 
+                  <Input
                     id="job_title"
                     name="job_title"
                     value={formData.job_title}
@@ -380,10 +380,10 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                     placeholder="HVAC Technician"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="specialization">Specialization</Label>
-                  <Input 
+                  <Input
                     id="specialization"
                     name="specialization"
                     value={formData.specialization}
@@ -391,10 +391,10 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                     placeholder="Residential Air Conditioning"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="years_of_experience">Years of Experience</Label>
-                  <Input 
+                  <Input
                     id="years_of_experience"
                     name="years_of_experience"
                     type="number"
@@ -403,10 +403,10 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                     placeholder="5"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="preferred_job_type">Preferred Job Type</Label>
-                  <Input 
+                  <Input
                     id="preferred_job_type"
                     name="preferred_job_type"
                     value={formData.preferred_job_type}
@@ -416,13 +416,13 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Availability Tab */}
             <TabsContent value="availability" className="space-y-4">
               <div className="space-y-4">
                 <div className="grid gap-2">
                   <Label htmlFor="days_availability">Days Available per Week</Label>
-                  <Input 
+                  <Input
                     id="days_availability"
                     name="days_availability"
                     type="number"
@@ -433,10 +433,10 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                     placeholder="5"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="hours_availability">Hours Available per Day</Label>
-                  <Input 
+                  <Input
                     id="hours_availability"
                     name="hours_availability"
                     value={formData.hours_availability}
@@ -447,17 +447,17 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
               </div>
             </TabsContent>
           </Tabs>
-          
+
           {error && (
             <div className="bg-red-50 text-red-700 p-3 rounded-md mt-4 text-sm">
               {error}
             </div>
           )}
-          
+
           <DialogFooter className="mt-6">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >

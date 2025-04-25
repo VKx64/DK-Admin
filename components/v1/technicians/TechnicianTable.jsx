@@ -69,7 +69,7 @@ const TechnicianTable = ({ technicians = [], isLoading = false, onDataChanged })
         return techDetails?.specialization || "—";
       },
     },
-    
+
     // Years of Experience column
     {
       id: "years_of_experience",
@@ -79,7 +79,7 @@ const TechnicianTable = ({ technicians = [], isLoading = false, onDataChanged })
         return experience ? `${experience} years` : "—";
       },
     },
-    
+
     // Actions column
     {
       id: "actions",
@@ -213,7 +213,7 @@ const TechnicianTable = ({ technicians = [], isLoading = false, onDataChanged })
       </div>
 
       {/* View Technician Dialog */}
-      <ViewTechnician 
+      <ViewTechnician
         open={viewDialog.isOpen}
         onOpenChange={(open) => setViewDialog((prev) => ({ ...prev, isOpen: open }))}
         technician={viewDialog.technician}
