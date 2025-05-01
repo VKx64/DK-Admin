@@ -79,6 +79,7 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0 }) => {
         const result = await pb.collection('users').getList(1, 100, {
           filter: 'role = "technician"',
           sort: 'name',
+          requestKey: null,
         });
 
         setTechnicians(result.items);
@@ -122,6 +123,7 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0 }) => {
           filter: filter,
           sort: sort,
           expand: 'user,assigned_technician',
+          requestKey: null,
         });
 
         // Transform data for the table

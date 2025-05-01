@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createProductWithAllData } from "@/services/pocketbase/createProducts";
 import { updateProductWithAllData } from "@/services/pocketbase/updateProducts";
 
@@ -29,6 +30,7 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [hasWarranty, setHasWarranty] = useState(false);
 
   // Current active tab
   const [activeTab, setActiveTab] = useState("basic");
@@ -61,6 +63,7 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
       },
 
       // Warranty info
+      has_warranty: false,
       warranty: {
         coverage: "",
         duration: ""
@@ -117,8 +120,15 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
 
       setValue("stock.stock_quantity", productData.stock || 0);
 
-      setValue("warranty.coverage", productData.warranty?.coverage || "");
-      setValue("warranty.duration", productData.warranty?.duration || "");
+      // Handle warranty data
+      const hasWarrantyData = !!(productData.warranty?.coverage || productData.warranty?.duration);
+      setHasWarranty(hasWarrantyData);
+      setValue("has_warranty", hasWarrantyData);
+
+      if (hasWarrantyData) {
+        setValue("warranty.coverage", productData.warranty?.coverage || "");
+        setValue("warranty.duration", productData.warranty?.duration || "");
+      }
 
       // Set image preview if exists
       if (productData.image && productData.image !== "/Images/default_user.jpg") {
@@ -126,6 +136,18 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
       }
     }
   }, [productData, setValue]);
+
+  // Handle warranty checkbox change
+  const handleWarrantyToggle = (checked) => {
+    setHasWarranty(checked);
+    setValue("has_warranty", checked);
+
+    if (!checked) {
+      // Clear warranty fields when unchecked
+      setValue("warranty.coverage", "");
+      setValue("warranty.duration", "");
+    }
+  };
 
   // Handle image upload
   const handleImageChange = (e) => {
@@ -175,10 +197,10 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
         stock: {
           stock_quantity: parseInt(data.stock.stock_quantity)
         },
-        warranty: {
+        warranty: data.has_warranty ? {
           coverage: data.warranty.coverage,
           duration: data.warranty.duration
-        }
+        } : null
       };
 
       let result;
@@ -228,6 +250,9 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
       setIsSubmitting(false);
     }
   };
+
+  // Watch has_warranty value
+  const watchHasWarranty = watch("has_warranty");
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -501,34 +526,43 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
 
             {/* Warranty Tab */}
             <TabsContent value="warranty" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="coverage">Warranty Coverage</Label>
-                <Controller
-                  name="warranty.coverage"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id="coverage"
-                      placeholder="E.g. Parts and Labor"
-                      {...field}
-                    />
-                  )}
-                />
+              <div className="flex items-center space-x-2">
+                <Checkbox id="has_warranty" checked={watchHasWarranty} onCheckedChange={handleWarrantyToggle} />
+                <Label htmlFor="has_warranty">This product has a warranty</Label>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="duration">Warranty Duration</Label>
-                <Controller
-                  name="warranty.duration"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id="duration"
-                      placeholder="E.g. 1 Year"
-                      {...field}
+
+              {hasWarranty && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="coverage">Warranty Coverage</Label>
+                    <Controller
+                      name="warranty.coverage"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          id="coverage"
+                          placeholder="E.g. Parts and Labor"
+                          {...field}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="duration">Warranty Duration</Label>
+                    <Controller
+                      name="warranty.duration"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          id="duration"
+                          placeholder="E.g. 1 Year"
+                          {...field}
+                        />
+                      )}
+                    />
+                  </div>
+                </>
+              )}
             </TabsContent>
           </Tabs>
 
