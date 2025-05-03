@@ -24,6 +24,7 @@ const Page = () => {
       const resultList = await pb.collection('users').getList(1, 100, {
         filter: 'role = "technician"',
         expand: 'technician_details',
+        requestKey: null,
       });
 
       setTechnicians(resultList.items);

@@ -2,11 +2,14 @@
 import { Icon } from "@iconify/react";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, UserPlus } from "lucide-react";
+import NewTechnician from "./NewTechnician";
 
 const Header = ({ onRefresh }) => {
   // State to handle refresh button loading state
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // State to control the NewTechnician dialog
+  const [isNewTechnicianOpen, setIsNewTechnicianOpen] = useState(false);
 
   // Handle manual refresh
   const handleRefresh = () => {
@@ -37,8 +40,18 @@ const Header = ({ onRefresh }) => {
           </h1>
         </div>
 
-        {/* Refresh Button */}
+        {/* Action Buttons */}
         <div className="flex flex-row gap-3">
+          <Button
+            size={"lg"}
+            variant={"default"}
+            className={"bg-primary hover:bg-primary/90"}
+            onClick={() => setIsNewTechnicianOpen(true)}
+          >
+            <UserPlus className="h-5 w-5 mr-2" />
+            Register Technician
+          </Button>
+
           <Button
             size={"lg"}
             variant={"outline"}
@@ -52,6 +65,13 @@ const Header = ({ onRefresh }) => {
           </Button>
         </div>
       </div>
+
+      {/* NewTechnician Dialog */}
+      <NewTechnician
+        open={isNewTechnicianOpen}
+        onOpenChange={setIsNewTechnicianOpen}
+        onSuccess={handleRefresh} // Refresh the list when a new technician is added
+      />
     </>
   );
 };

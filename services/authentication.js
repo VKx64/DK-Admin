@@ -10,13 +10,15 @@ export async function login(email, password) {
       .collection("users")
       .authWithPassword(email, password);
 
-    // Check if the authenticated user has the 'admin' role
-    if (authData.record && authData.record.role === "admin") {
-      console.log("Admin Login Successful!");
-      console.log("User ID: ", pb.authStore.record.id);
+    // Check if authentication was successful (authData will have record)
+    if (authData.record) {
+      console.log("Login Successful!");
+      console.log("User ID: ", pb.authStore.record.id); // Use model instead of record after auth
       return true;
     } else {
-      console.log("Login Failed: User is not an admin.");
+      // This case might not be strictly necessary as authWithPassword throws on failure
+      // but kept for robustness
+      console.log("Login Failed: Authentication data missing.");
       pb.authStore.clear();
       return false;
     }

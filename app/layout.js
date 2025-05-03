@@ -1,9 +1,9 @@
 import { Geist, Geist_Mono, Raleway } from "next/font/google";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import SideNavigation from "@/components/v1/SideNavigation";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+import LayoutWrapper from "@/components/v1/LayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +28,9 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-row w-screen h-screen ${inter.className}`}>
         <AuthProvider>
-          <SideNavigation />
-          {children}
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
           <Toaster richColors position="top-right" />
         </AuthProvider>
       </body>

@@ -9,126 +9,186 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, Pencil, Trash } from 'lucide-react';
+import Image from 'next/image';
+import { Icon } from "@iconify/react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import ViewTechnician from './ViewTechnician';
 import EditTechnician from './EditTechnician';
 
 /**
- * TechnicianTable - Simple table for displaying technician data
+ * TechnicianTable - Table for displaying technician data with consistent styling
  */
 const TechnicianTable = ({ technicians = [], isLoading = false, onDataChanged }) => {
-  // State for the view technician dialog
-  const [viewDialog, setViewDialog] = useState({
-    isOpen: false,
-    technician: null,
-  });
+  // State for ViewTechnician dialog
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedTechnicianForView, setSelectedTechnicianForView] = useState(null);
 
-  // State for the edit technician dialog
-  const [editDialog, setEditDialog] = useState({
-    isOpen: false,
-    technician: null,
-  });
+  // State for EditTechnician dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState(null);
 
-  // Define column configuration with only the requested columns
+  // Define column configuration with consistent styling
   const columns = [
+    // Profile image column
+    {
+      id: "image",
+      header: () => <div className="text-center font-medium">Profile</div>,
+      cell: ({ row }) => {
+        // Avatar is stored in the users table, not in technician_details
+        const avatarImage = row.original.avatar;
+        const imageUrl = avatarImage
+          ? `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${row.original.id}/${avatarImage}`
+          : "/Images/default_user.jpg";
+
+        return (
+          <div className="flex justify-center items-center">
+            <div className="h-10 w-10 relative rounded-full overflow-hidden border border-gray-950/20">
+              <Image
+                src={imageUrl}
+                alt={row.original.name || "Technician image"}
+                fill
+                sizes="40px"
+                className="object-cover"
+              />
+            </div>
+          </div>
+        );
+      },
+      enableSorting: false,
+      size: 70,
+    },
+
     // Name column
     {
       accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => row.getValue("name") || "Unnamed Technician",
+      header: () => <div className="text-left font-medium">Name</div>,
+      cell: ({ row }) => (
+        <div className="text-left font-medium">
+          {row.getValue("name") || "Unnamed Technician"}
+        </div>
+      ),
+      size: 180,
     },
 
     // Email column
     {
       accessorKey: "email",
-      header: "Email",
-      cell: ({ row }) => row.getValue("email"),
+      header: () => <div className="text-left font-medium">Email</div>,
+      cell: ({ row }) => (
+        <div className="text-left">{row.getValue("email") || "-"}</div>
+      ),
+      size: 180,
     },
 
     // Preferred Job Type column
     {
       id: "preferred_job_type",
-      header: "Preferred Job",
+      header: () => <div className="text-left font-medium">Preferred Job</div>,
       cell: ({ row }) => {
         const techDetails = row.original.expand?.technician_details;
-        return techDetails?.preferred_job_type || "—";
+        return (
+          <div className="text-left">
+            {techDetails?.preferred_job_type || "-"}
+          </div>
+        );
       },
+      size: 120,
     },
 
     // Specialization column
     {
       id: "specialization",
-      header: "Specialization",
+      header: () => <div className="text-left font-medium">Specialization</div>,
       cell: ({ row }) => {
         const techDetails = row.original.expand?.technician_details;
-        return techDetails?.specialization || "—";
+        return (
+          <div className="text-left">
+            {techDetails?.specialization || "-"}
+          </div>
+        );
       },
+      size: 150,
     },
 
     // Years of Experience column
     {
       id: "years_of_experience",
-      header: "Experience",
+      header: () => <div className="text-right font-medium">Experience</div>,
       cell: ({ row }) => {
         const experience = row.original.expand?.technician_details?.years_of_experience;
-        return experience ? `${experience} years` : "—";
+        return (
+          <div className="text-right">
+            {experience ? `${experience} years` : "-"}
+          </div>
+        );
       },
+      size: 100,
     },
 
-    // Actions column
+    // Actions column with Iconify icons (view, edit, delete)
     {
       id: "actions",
-      header: "Actions",
+      header: () => <div className="text-right font-medium">Actions</div>,
       cell: ({ row }) => (
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-2 justify-end">
+          {/* View button */}
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 hover:bg-blue-100 hover:text-blue-600"
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
             onClick={() => handleViewTechnician(row.original)}
           >
-            <Eye className="h-4 w-4" />
+            <Icon icon="mdi:eye-outline" width={16} />
           </Button>
+
+          {/* Edit button */}
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 hover:bg-green-100 hover:text-green-600"
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
             onClick={() => handleEditTechnician(row.original)}
           >
-            <Pencil className="h-4 w-4" />
+            <Icon icon="mdi:pencil-outline" width={16} />
           </Button>
+
+          {/* Delete button */}
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 hover:bg-red-100 hover:text-red-600"
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
             onClick={() => {}}
           >
-            <Trash className="h-4 w-4" />
+            <Icon icon="mdi:trash-can-outline" width={16} />
           </Button>
         </div>
       ),
+      size: 120,
     },
   ];
 
-  // Handle viewing technician details
+  // Create table instance with TanStack Table
+  const table = useReactTable({
+    data: technicians || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  // Handler functions for actions
   const handleViewTechnician = (technician) => {
-    setViewDialog({
-      isOpen: true,
-      technician: technician,
-    });
+    setSelectedTechnicianForView(technician); // Set the selected technician
+    setIsViewDialogOpen(true); // Open the dialog
   };
 
   // Handle editing technician details
   const handleEditTechnician = (technician) => {
-    setEditDialog({
-      isOpen: true,
-      technician: technician,
-    });
+    setSelectedTechnicianForEdit(technician); // Set the selected technician for editing
+    setIsEditDialogOpen(true); // Open the edit dialog
   };
 
   // Handle successful technician update
@@ -139,21 +199,11 @@ const TechnicianTable = ({ technicians = [], isLoading = false, onDataChanged })
     }
   };
 
-  // Create table instance
-  const table = useReactTable({
-    data: technicians,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
   // Show loading state if loading
   if (isLoading) {
     return (
-      <div className="bg-white p-8 text-center rounded-md border flex-1 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin h-8 w-8 border-b-2 border-gray-900 rounded-full mb-4"></div>
-          <p className="text-gray-600">Loading technicians...</p>
-        </div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -161,69 +211,72 @@ const TechnicianTable = ({ technicians = [], isLoading = false, onDataChanged })
   // Render table with technician data
   return (
     <>
-      <div className="flex flex-col gap-4 flex-1">
-        <div className="rounded-md border overflow-hidden flex-1 flex flex-col bg-white">
-          <div className="overflow-auto flex-1">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="px-4 py-3 bg-gray-50 font-medium text-left"
+      <div className="rounded-md border bg-white">
+        <div className="overflow-auto">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="px-4 py-3 bg-gray-50"
+                      style={{
+                        width: header.column.columnDef.size,
+                      }}
+                    >
+                      {header.isPlaceholder ? null : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                // Map through rows if we have data
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="px-4 py-3"
+                        style={{
+                          width: cell.column.columnDef.size,
+                        }}
                       >
-                        {header.isPlaceholder ? null : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </TableHead>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
                     ))}
                   </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  // Map through rows if we have data
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="px-4 py-3">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  // Show this if no data found
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No technicians found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        <div className="text-sm text-gray-500 pl-2">
-          {technicians.length} technician{technicians.length !== 1 ? 's' : ''} found
+                ))
+              ) : (
+                // Show this if no data found
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No technicians found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
       {/* View Technician Dialog */}
       <ViewTechnician
-        open={viewDialog.isOpen}
-        onOpenChange={(open) => setViewDialog((prev) => ({ ...prev, isOpen: open }))}
-        technician={viewDialog.technician}
+        open={isViewDialogOpen}
+        onOpenChange={setIsViewDialogOpen}
+        technician={selectedTechnicianForView}
       />
 
       {/* Edit Technician Dialog */}
       <EditTechnician
-        open={editDialog.isOpen}
-        onOpenChange={(open) => setEditDialog((prev) => ({ ...prev, isOpen: open }))}
-        technician={editDialog.technician}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        technician={selectedTechnicianForEdit}
         onSuccess={handleTechnicianUpdated}
       />
     </>
