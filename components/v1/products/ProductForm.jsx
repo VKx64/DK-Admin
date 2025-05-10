@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { createProductWithAllData } from "@/services/pocketbase/createProducts";
 import { updateProductWithAllData } from "@/services/pocketbase/updateProducts";
 
@@ -487,11 +488,19 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
                   name="specifications.compressorType"
                   control={control}
                   render={({ field }) => (
-                    <Input
+                    <Select
                       id="compressorType"
-                      placeholder="E.g. Inverter"
-                      {...field}
-                    />
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select compressor type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Inverter">Inverter</SelectItem>
+                        <SelectItem value="Non-Inverter">Non-Inverter</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 />
               </div>
