@@ -32,7 +32,7 @@ const SideNavigation = () => {
       <div className='w-full h-full flex flex-col gap-1'>
         {/* Always visible */}
         <ItemNavigation icon={"mingcute:calendar-day-line"} text={"Home"} href={'/'} />
-        <ItemNavigation icon={"mingcute:calendar-day-line"} text={"My Details"} href={'/technitian_information'} />
+        {(isTechnician /* || isTechnician */) && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"My Details"} href={'/technitian_information'} />}
 
         {/* Admin or specific roles */}
         {(isAdmin /* || isTechnician */) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts"} href={'/parts'} />}

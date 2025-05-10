@@ -26,7 +26,6 @@ export default function Home() {
 
   return (
     <div className="h-full w-full bg-blue-500 flex items-center justify-center">
-      <Button variant={"destructive"}>Oten ni jaero</Button>
     </div>
   );
 }
