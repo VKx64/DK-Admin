@@ -63,7 +63,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center h-full w-full bg-[url('/Images/default_user.jpg')] bg-cover bg-center">
+    <div className="flex items-center justify-center h-full w-full bg-[url('/Images/bg.png')] bg-cover bg-center">
       <Card className="w-96">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
