@@ -42,7 +42,7 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
       // Basic product info
       product_name: "",
       product_model: "",
-      brand: "",
+      brand: "Daikin",
 
       // Pricing info
       pricing: {

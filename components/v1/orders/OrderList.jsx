@@ -78,6 +78,7 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged }, ref) => {
       filtered = filtered.filter(order =>
         order.id.toLowerCase().includes(searchLower) ||
         (order.expand?.user?.name && order.expand.user.name.toLowerCase().includes(searchLower)) ||
+        (order.guest_user && order.guest_user.toLowerCase().includes(searchLower)) ||
         (order.expand?.address?.name && order.expand.address.name.toLowerCase().includes(searchLower)) ||
         (order.expand?.address?.phone && order.expand.address.phone.includes(search))
       );

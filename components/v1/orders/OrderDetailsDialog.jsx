@@ -236,7 +236,7 @@ const OrderDetailsDialog = ({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Name:</span>
-                <span>{order.expand?.user?.name || "N/A"}</span>
+                <span>{order?.guest_user || order?.expand?.user?.name || "N/A"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Email:</span>

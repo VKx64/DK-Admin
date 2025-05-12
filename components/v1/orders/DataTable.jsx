@@ -129,10 +129,11 @@ const DataTable = ({
       id: "customerName",
       header: () => <div className="text-left font-medium">Customer</div>,
       cell: ({ row }) => {
-        // Get the customer name from the expanded user data
-        const customerName = row.original.expand?.user?.name || "Unknown Customer";
+        // Check for guest user first, then fallback to registered user or a default
+        const customerName = row.original.guest_user || row.original.expand?.user?.name || "N/A";
         return <div className="text-left">{customerName}</div>;
       },
+      size: 150, // Adjusted size slightly for potentially longer names
     },
 
     // Order Date column

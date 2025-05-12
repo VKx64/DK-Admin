@@ -332,28 +332,31 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      let userId = data.user;
+      let userId = data.user; // Will be populated if customer_type is "existing"
       let addressId = data.address;
+      let guestUserName = null; // Variable to store guest user name
 
-      // If new customer, create a user first
+      // If new customer, store the name but don't create a user
       if (data.customer_type === "new") {
-        try {
-          const newUser = await pb.collection("users").create({
-            name: data.customer_name,
-            email: `customer_${Date.now()}@example.com`, // Placeholder email
-            password: Math.random().toString(36).slice(-8), // Random password
-            passwordConfirm: Math.random().toString(36).slice(-8),
-            role: "customer"
-          });
-
-          userId = newUser.id;
-        } catch (error) {
-          console.error("Error creating new customer:", error);
-          throw new Error("Failed to create new customer");
-        }
+        userId = null; // Ensure userId is null for guest customers
+        guestUserName = data.customer_name;
+        // Removed the code block that created a new user record
+        // try {
+        //   const newUser = await pb.collection("users").create({
+        //     name: data.customer_name,
+        //     email: \`customer_\${Date.now()}@example.com\`, // Placeholder email
+        //     password: Math.random().toString(36).slice(-8), // Random password
+        //     passwordConfirm: Math.random().toString(36).slice(-8),
+        //     role: "customer"
+        //   });
+        //   userId = newUser.id;
+        // } catch (error) {
+        //   console.error("Error creating new customer:", error);
+        //   throw new Error("Failed to create new customer");
+        // }
       }
 
-      // If new address is needed, create it
+      // If new address is needed, create it (associated with userId, which might be null)
       if (showAddressForm && data.mode_of_payment === "Cash On Delivery") {
         try {
           const regionObj = regions.find(r => r.code === data.new_address.region);
@@ -364,7 +367,7 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
           const fullAddress = `${data.new_address.street_address}, ${barangayObj?.name || ''}, ${cityObj?.name || ''}, ${provinceObj?.name || ''}, ${regionObj?.name || ''}`;
 
           const newAddress = await pb.collection("delivery_information").create({
-            user: userId,
+            user: userId, // Pass userId (can be null for guests)
             name: data.new_address.name,
             phone: data.new_address.phone,
             address: fullAddress,
@@ -388,16 +391,19 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
         }
       }
 
+      // Prepare order data payload based on customer type
       const orderData = {
-        user: userId,
         status: data.status,
-        products: selectedProductIds,
+        products: selectedProductIds, // Assuming quantities are handled elsewhere or not needed here
         mode_of_payment: data.mode_of_payment,
+        ...(data.customer_type === "existing" ? { user: userId } : { guest_user: guestUserName }), // Use user or guest_user
         ...(data.mode_of_payment === "Cash On Delivery" ? {
           address: addressId,
           delivery_fee: parseFloat(data.delivery_fee) || 0
         } : {})
       };
+
+      console.log("Submitting Order Data:", orderData); // Log the data being sent
 
       const newOrder = await createOrder(orderData);
 
