@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
-import { FileText, CheckCircle, XCircle, User, Calendar, Briefcase, Clock, ExternalLink } from 'lucide-react';
+import { Icon } from '@iconify/react';
 
 /**
  * ViewTechnician - Component for displaying detailed technician information in a dialog with tabs
@@ -88,16 +88,16 @@ const ViewTechnician = ({ open, onOpenChange, technician }) => {
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="profile" className="flex items-center gap-1">
-              <User className="h-4 w-4" /> Profile
+              <Icon icon="mdi:account" className="h-4 w-4" /> Profile
             </TabsTrigger>
             <TabsTrigger value="technical" className="flex items-center gap-1">
-              <Briefcase className="h-4 w-4" /> Technical
+              <Icon icon="mdi:briefcase" className="h-4 w-4" /> Technical
             </TabsTrigger>
             <TabsTrigger value="availability" className="flex items-center gap-1">
-              <Clock className="h-4 w-4" /> Availability
+              <Icon icon="mdi:clock-outline" className="h-4 w-4" /> Availability
             </TabsTrigger>
             <TabsTrigger value="account" className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" /> Account
+              <Icon icon="mdi:calendar" className="h-4 w-4" /> Account
             </TabsTrigger>
           </TabsList>
 
@@ -136,7 +136,7 @@ const ViewTechnician = ({ open, onOpenChange, technician }) => {
                     />
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                       <span className="text-white bg-black bg-opacity-50 px-2 py-2 rounded text-sm flex items-center gap-1">
-                        <ExternalLink className="h-3.5 w-3.5" /> Click to open resume
+                        <Icon icon="mdi:open-in-new" className="h-3.5 w-3.5" /> Click to open resume
                       </span>
                     </div>
                   </div>
@@ -144,7 +144,7 @@ const ViewTechnician = ({ open, onOpenChange, technician }) => {
               ) : (
                 <div className="flex items-center justify-center w-full h-32 bg-gray-100 rounded-md">
                   <div className="flex flex-col items-center text-gray-500">
-                    <FileText className="h-10 w-10 mb-2" />
+                    <Icon icon="mdi:file-document-outline" className="h-10 w-10 mb-2" />
                     <span>No resume uploaded</span>
                   </div>
                 </div>
@@ -204,11 +204,11 @@ const ViewTechnician = ({ open, onOpenChange, technician }) => {
                 <div className="flex items-center">
                   {technician.verified ? (
                     <span className="text-green-600 flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-1" /> Verified
+                      <Icon icon="mdi:check-circle" className="h-4 w-4 mr-1" /> Verified
                     </span>
                   ) : (
                     <span className="text-amber-600 flex items-center">
-                      <XCircle className="h-4 w-4 mr-1" /> Not verified
+                      <Icon icon="mdi:alert-circle" className="h-4 w-4 mr-1" /> Not verified
                     </span>
                   )}
                 </div>

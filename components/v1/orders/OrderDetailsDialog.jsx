@@ -15,7 +15,8 @@ import { updateOrderStatus } from '@/services/pocketbase/updateOrders';
 const OrderDetailsDialog = ({
   order,
   open,
-  onOpenChange
+  onOpenChange,
+  userRole
 }) => {
   // State for storing product details
   const [products, setProducts] = useState([]);
@@ -388,18 +389,23 @@ const OrderDetailsDialog = ({
                     <span className={`${status === 'Pending' ? 'font-medium' : ''}`}>Pending</span>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleStatusChange('Approved')}>
-                  <div className="flex items-center">
-                    {status === 'Approved' && <CheckIcon className="mr-2 h-4 w-4" />}
-                    <span className={`${status === 'Approved' ? 'font-medium' : ''}`}>Approved</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleStatusChange('Declined')}>
-                  <div className="flex items-center">
-                    {status === 'Declined' && <CheckIcon className="mr-2 h-4 w-4" />}
-                    <span className={`${status === 'Declined' ? 'font-medium' : ''}`}>Declined</span>
-                  </div>
-                </DropdownMenuItem>
+                {/* Only allow 'Approved' and 'Declined' for super-admins if status is Pending */}
+                {!(status === 'Pending' && userRole === 'admin') && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('Approved')}>
+                    <div className="flex items-center">
+                      {status === 'Approved' && <CheckIcon className="mr-2 h-4 w-4" />}
+                      <span className={`${status === 'Approved' ? 'font-medium' : ''}`}>Approved</span>
+                    </div>
+                  </DropdownMenuItem>
+                )}
+                {!(status === 'Pending' && userRole === 'admin') && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('Declined')}>
+                    <div className="flex items-center">
+                      {status === 'Declined' && <CheckIcon className="mr-2 h-4 w-4" />}
+                      <span className={`${status === 'Declined' ? 'font-medium' : ''}`}>Declined</span>
+                    </div>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

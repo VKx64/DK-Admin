@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { FileText, CheckCircle, XCircle, User, Calendar, Briefcase, Clock, Upload, Loader2 } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { pb } from '@/lib/pocketbase';
 
 /**
@@ -269,7 +269,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                   htmlFor="avatar-upload"
                   className="cursor-pointer text-white"
                 >
-                  <Upload className="h-6 w-6" />
+                  <Icon icon="mdi:upload" className="h-6 w-6" />
                 </label>
                 <input
                   id="avatar-upload"
@@ -289,13 +289,13 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="profile" className="flex items-center gap-1">
-                <User className="h-4 w-4" /> Profile
+                <Icon icon="mdi:account" className="h-4 w-4" /> Profile
               </TabsTrigger>
               <TabsTrigger value="technical" className="flex items-center gap-1">
-                <Briefcase className="h-4 w-4" /> Technical
+                <Icon icon="mdi:briefcase" className="h-4 w-4" /> Technical
               </TabsTrigger>
               <TabsTrigger value="availability" className="flex items-center gap-1">
-                <Clock className="h-4 w-4" /> Availability
+                <Icon icon="mdi:clock-outline" className="h-4 w-4" /> Availability
               </TabsTrigger>
             </TabsList>
 
@@ -342,7 +342,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                             htmlFor="resume-upload"
                             className="cursor-pointer text-white bg-black bg-opacity-50 px-3 py-1.5 rounded-md flex items-center gap-1"
                           >
-                            <Upload className="h-4 w-4" /> Change Resume
+                            <Icon icon="mdi:upload" className="h-4 w-4" /> Change Resume
                           </label>
                         </div>
                       </div>
@@ -351,7 +351,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
                         htmlFor="resume-upload"
                         className="flex flex-col items-center justify-center h-32 gap-2 cursor-pointer text-gray-500"
                       >
-                        <FileText className="h-10 w-10" />
+                        <Icon icon="mdi:file-document-outline" className="h-10 w-10" />
                         <span>Click to upload resume</span>
                       </label>
                     )}
@@ -466,7 +466,7 @@ const EditTechnician = ({ open, onOpenChange, technician, onSuccess }) => {
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Icon icon="mdi:loading" className="h-4 w-4 mr-2 animate-spin" />
                   Saving...
                 </>
               ) : 'Save Changes'}

@@ -18,7 +18,8 @@ const Filters = ({
   onStockSortChange,
   onDiscountSortChange,
   onCategoryChange,
-  uniqueCategories = []
+  uniqueCategories = [],
+  userRole
 }) => {
   // If no categories are provided, use these defaults (this will be removed once dynamic categories are working)
   const defaultCategories = ["HVAC", "Air Conditioning", "Ventilation", "Accessories", "Control Systems"];
@@ -76,18 +77,18 @@ const Filters = ({
 
       {/* Discount Filter */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex flex-row items-center gap-2.5 bg-[#EFEFEF] rounded-sm px-3 py-2">
+        <DropdownMenuTrigger className="flex flex-row items-center gap-2.5 bg-[#EFEFEF] rounded-sm px-3 py-2" disabled={userRole !== 'super-admin'}>
           <p className="font-raleway font-medium text-xs text-[#3D3D3D]">Discount</p>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => onDiscountSortChange('lowToHigh')}>
+          <DropdownMenuItem onClick={() => onDiscountSortChange('lowToHigh')} disabled={userRole !== 'super-admin'}>
             Lowest to Highest
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onDiscountSortChange('highToLow')}>
+          <DropdownMenuItem onClick={() => onDiscountSortChange('highToLow')} disabled={userRole !== 'super-admin'}>
             Highest to Lowest
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onDiscountSortChange('')}>
+          <DropdownMenuItem onClick={() => onDiscountSortChange('')} disabled={userRole !== 'super-admin'}>
             Clear Filter
           </DropdownMenuItem>
         </DropdownMenuContent>

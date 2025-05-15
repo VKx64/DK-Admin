@@ -25,8 +25,9 @@ import { updateProductWithAllData } from "@/services/pocketbase/updateProducts";
  * @param {Function} props.onClose - Function to call when dialog is closed
  * @param {Object} props.productData - Product data to edit (null for new product)
  * @param {Function} props.onSuccess - Function to call after successful submission
+ * @param {string} props.userRole - User role for access control
  */
-const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
+const ProductForm = ({ isOpen, onClose, productData = null, onSuccess, userRole }) => {
   // State for tracking form submission and loading
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -418,6 +419,9 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
                         placeholder="0"
                         {...field}
                         className={errors.pricing?.discount ? "border-red-500" : ""}
+                        readOnly={userRole !== 'super-admin'}
+                        disabled={userRole !== 'super-admin'}
+                        title={userRole !== 'super-admin' ? 'Only super-admin can modify discount' : undefined}
                       />
                     )}
                   />
@@ -524,6 +528,9 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess }) => {
                       placeholder="0"
                       {...field}
                       className={errors.stock?.stock_quantity ? "border-red-500" : ""}
+                      readOnly={userRole !== 'super-admin'}
+                      disabled={userRole !== 'super-admin'}
+                      title={userRole !== 'super-admin' ? 'Only super-admin can modify stock' : undefined}
                     />
                   )}
                 />

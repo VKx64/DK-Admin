@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import ProductForm from "./ProductForm";
 import { RefreshCw } from "lucide-react"; // Import the Lucide React refresh icon
 
-const Header = ({ onSearchChange, onProductAdded, onRefresh }) => {
+const Header = ({ onSearchChange, onProductAdded, onRefresh, userRole }) => {
   // State to control the product form dialog
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   // State to handle refresh button loading state
@@ -59,6 +59,8 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh }) => {
             size={"lg"}
             className={"bg-[#5CCFBC]"}
             onClick={() => setIsProductFormOpen(true)}
+            disabled={userRole !== 'super-admin'}
+            title={userRole !== 'super-admin' ? 'Only super-admin can add products' : undefined}
           >
             <Icon icon="mingcute:add-line" className="size-6" /> Add Product
           </Button>
@@ -78,6 +80,7 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh }) => {
             onProductAdded(newProduct);
           }
         }}
+        userRole={userRole}
       />
     </>
   );

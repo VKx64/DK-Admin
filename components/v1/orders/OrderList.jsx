@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { getAllOrders } from '@/services/pocketbase/readOrders';
 import { getProductWithAllData } from '@/services/pocketbase/readProducts';
 
-const OrderList = forwardRef(({ searchQuery = "", onDataChanged }, ref) => {
+const OrderList = forwardRef(({ searchQuery = "", onDataChanged, userRole }, ref) => {
   // State for order data
   const [orderData, setOrderData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -174,6 +174,7 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged }, ref) => {
             onTableReady={handleTableReady}
             onDataChanged={handleDataChanged}
             onViewOrder={handleViewOrder}
+            userRole={userRole}
           />
         )}
 
@@ -214,6 +215,7 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged }, ref) => {
           setIsDetailsDialogOpen(open);
           if (!open) setViewingOrder(null);
         }}
+        userRole={userRole}
       />
     </div>
   );

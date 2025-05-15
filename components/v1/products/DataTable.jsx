@@ -68,8 +68,9 @@ if (typeof document !== 'undefined') {
  * @param {Function} props.setRowSelection - Function to update row selection state
  * @param {Function} props.onTableReady - Function called with the table instance after creation
  * @param {Function} props.onDataChanged - Function called when data is changed (create/update/delete)
+ * @param {String} props.userRole - User role for access control
  */
-const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataChanged }) => {
+const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataChanged, userRole }) => {
   // State for controlling the edit product form
   const [editProduct, setEditProduct] = useState(null);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
@@ -215,6 +216,8 @@ const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataCh
             size="sm"
             className="h-8 w-8 p-0"
             onClick={() => handleEditProduct(row.original)}
+            disabled={userRole !== 'super-admin'}
+            title={userRole !== 'super-admin' ? 'Only super-admin can edit stocks/discount' : undefined}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -392,6 +395,8 @@ const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataCh
                 size="sm"
                 onClick={handleBatchDiscountConfirmation}
                 className="mr-2"
+                disabled={userRole !== 'super-admin'}
+                title={userRole !== 'super-admin' ? 'Only super-admin can apply batch discount' : undefined}
               >
                 <Percent className="h-4 w-4 mr-1" /> Apply Discount
               </Button>
@@ -469,6 +474,7 @@ const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataCh
           onClose={() => setIsEditFormOpen(false)}
           productData={editProduct}
           onSuccess={handleProductFormSuccess}
+          userRole={userRole}
         />
       )}
 

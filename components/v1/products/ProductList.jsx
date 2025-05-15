@@ -5,7 +5,7 @@ import DataTable from './DataTable'
 import { Button } from '@/components/ui/button'
 import { getProductsWithAllData } from '@/services/pocketbase/readProducts'
 
-const ProductList = ({ searchQuery = "", onDataChanged }) => {
+const ProductList = ({ searchQuery = "", onDataChanged, userRole }) => {
   // State for product data
   const [productData, setProductData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -191,6 +191,7 @@ const ProductList = ({ searchQuery = "", onDataChanged }) => {
             setPage(1); // Reset to first page when changing category
           }}
           uniqueCategories={uniqueCategories}
+          userRole={userRole}
         />
 
         {/* Divider line */}
@@ -218,6 +219,7 @@ const ProductList = ({ searchQuery = "", onDataChanged }) => {
             setRowSelection={setRowSelection}
             onTableReady={handleTableReady}
             onDataChanged={handleDataChanged}
+            userRole={userRole}
           />
         )}
 

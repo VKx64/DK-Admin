@@ -62,7 +62,8 @@ const DataTable = ({
   setRowSelection,
   onTableReady,
   onDataChanged,
-  onViewOrder
+  onViewOrder,
+  userRole
 }) => {
   // State for delete confirmation dialog
   const [deleteDialog, setDeleteDialog] = useState({
@@ -209,7 +210,17 @@ const DataTable = ({
         const order = row.original;
         const status = order.status;
         const paymentMethod = order.mode_of_payment;
-        const availableStatuses = getAvailableStatuses(paymentMethod, status);
+        // Only allow 'Approved' and 'Declined' for super-admins if status is Pending
+        const availableStatuses = getAvailableStatuses(paymentMethod, status).filter((statusOption) => {
+          if (
+            (statusOption === 'Approved' || statusOption === 'Declined') &&
+            status === 'Pending' &&
+            userRole === 'admin'
+          ) {
+            return false;
+          }
+          return true;
+        });
 
         return (
           <div className="flex gap-2 justify-end">
@@ -430,11 +441,16 @@ const DataTable = ({
               {Object.keys(rowSelection).length} item(s) selected
             </span>
             <div className="flex gap-2">
+              {/* Only allow bulk approve for super-admins or for non-pending orders if admin */}
               <Button
                 variant="outline"
                 size="sm"
                 className="text-green-600 border-green-200 hover:bg-green-50"
                 onClick={() => handleBulkStatusUpdate('Approved')}
+                disabled={
+                  userRole === 'admin' &&
+                  data.filter((row) => rowSelection[row.id] && row.status === 'Pending').length > 0
+                }
               >
                 <CheckCircle className="h-4 w-4 mr-1" /> Approve Selected
               </Button>
@@ -443,6 +459,10 @@ const DataTable = ({
                 size="sm"
                 className="text-red-600 border-red-200 hover:bg-red-50"
                 onClick={() => handleBulkStatusUpdate('Declined')}
+                disabled={
+                  userRole === 'admin' &&
+                  data.filter((row) => rowSelection[row.id] && row.status === 'Pending').length > 0
+                }
               >
                 <XCircle className="h-4 w-4 mr-1" /> Decline Selected
               </Button>

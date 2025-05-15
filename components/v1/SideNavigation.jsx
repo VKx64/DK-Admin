@@ -11,6 +11,7 @@ const SideNavigation = () => {
   // Define role-based visibility with null check for user
   const isAdmin = user?.role === 'admin';
   const isTechnician = user?.role === 'technician';
+  const isSuperAdmin = user?.role === 'super-admin';
 
   const handleLogout = () => {
     // Prevent any potential errors during logout process
@@ -30,17 +31,25 @@ const SideNavigation = () => {
       <div className='w-full h-[1px] bg-white/10' />
 
       <div className='w-full h-full flex flex-col gap-1'>
+
         {/* Always visible */}
         <ItemNavigation icon={"mingcute:calendar-day-line"} text={"Home"} href={'/'} />
-        {(isTechnician /* || isTechnician */) && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"My Details"} href={'/technitian_information'} />}
 
-        {/* Admin or specific roles */}
-        {(isAdmin /* || isTechnician */) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts"} href={'/parts'} />}
-        {(isAdmin /* || isTechnician */) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts Log"} href={'/parts_history'} />}
-        {(isAdmin /* || isTechnician */) && <ItemNavigation icon={"mingcute:receive-money-line"} text={"Orders"} href={'/orders'} />}
-        {isAdmin && <ItemNavigation icon={"mingcute:air-condition-open-line"} text={"Products"} href={'/products'} />}
-        {isAdmin && <ItemNavigation icon={"mingcute:user-heart-line"} text={"Customers"} href={'/customers'} />}
-        {isAdmin && <ItemNavigation icon={"mingcute:user-setting-line"} text={"Technicians"} href={'/technicians'} />}
+        {/* Technician Role */}
+        {(isTechnician) && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"My Details"} href={'/technitian_information'} />}
+
+        {/* Super Admin Role */}
+        {(isSuperAdmin) && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"Branch"} href={'/branch'} />}
+
+        {/* Admin Role */}
+        {(isAdmin) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts"} href={'/parts'} />}
+        {(isAdmin) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts Log"} href={'/parts_history'} />}
+        {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:receive-money-line"} text={"Orders"} href={'/orders'} />}
+        {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:air-condition-open-line"} text={"Products"} href={'/products'} />}
+        {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:user-heart-line"} text={"Customers"} href={'/customers'} />}
+        {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:user-setting-line"} text={"Technicians"} href={'/technicians'} />}
+
+        {/* Combined Role */}
         {(isAdmin || isTechnician) && <ItemNavigation icon={"mingcute:user-setting-line"} text={"Service"} href={'/service'} />}
 
       </div>

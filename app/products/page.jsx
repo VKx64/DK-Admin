@@ -2,6 +2,7 @@
 import Header from '@/components/v1/products/Header'
 import ProductList from '@/components/v1/products/ProductList'
 import React, { useState } from 'react'
+import { pb } from '@/lib/pocketbase';
 
 const ProductsPage = () => {
   // State for search query that will be passed down to ProductList
@@ -9,6 +10,9 @@ const ProductsPage = () => {
 
   // State to trigger data refresh
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Get the current user's role from PocketBase
+  const userRole = pb.authStore.record?.role;
 
   // Handle search input change
   const handleSearchChange = (e) => {
@@ -33,6 +37,7 @@ const ProductsPage = () => {
       <ProductList
         searchQuery={searchQuery}
         onDataChanged={handleDataChanged}
+        userRole={userRole}
       />
     </div>
   )
