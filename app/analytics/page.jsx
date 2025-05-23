@@ -1,0 +1,305 @@
+"use client";
+import React, { useState, useMemo, useEffect } from "react";
+import pb from "@/services/pocketbase";
+import { Icon } from "@iconify/react";
+
+import StatCard from "@/components/v1/analytics/StatCard";
+import PaymentMethodsCard from "@/components/v1/analytics/PaymentMethodsCard";
+import TopBrandsCard from "@/components/v1/analytics/TopBrandsCard";
+import UserRegistrationsTrendCard from "@/components/v1/analytics/UserRegistrationsTrendCard";
+import ServiceRequestsTrendCard from "@/components/v1/analytics/ServiceRequestsTrendCard";
+import RevenueTrendCard from "@/components/v1/analytics/RevenueTrendCards";
+import UserRolesCard from "@/components/v1/analytics/UserRolesCard";
+import ServiceRequestStatusCard from "@/components/v1/analytics/ServiceRequestStatusCard";
+import TopProductsByStockCard from "@/components/v1/analytics/TopProductsByStockCard";
+import TechnicianPerformanceList from "@/components/v1/analytics/TechnicianPerformanceList";
+
+// Define PIE_COLORS for Pie Charts, to be passed to relevant card components
+const PIE_COLORS = [
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#AF19FF",
+  "#FF1919",
+  "#4BC0C0",
+  "#9966FF",
+];
+
+const AnalyticsPage = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState("last30days");
+  const [selectedView, setSelectedView] = useState("overview");
+  const [userRegistrations, setUserRegistrations] = useState([]);
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [parts, setParts] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [partStockLogs, setPartStockLogs] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
+  const [productStocks, setProductStocks] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [
+        users,
+        services,
+        ordersRes,
+        partsRes,
+        productsRes,
+        logs,
+        productStocksRes,
+      ] = await Promise.all([
+        pb.collection("users").getFullList(),
+        pb.collection("service_request").getFullList(),
+        pb.collection("user_order").getFullList(),
+        pb.collection("parts").getFullList(),
+        pb.collection("products").getFullList(),
+        pb.collection("part_stock_log").getFullList(),
+        pb.collection("product_stocks").getFullList(),
+      ]);
+
+      console.log("Fetched users:", users);
+      console.log("Fetched service requests:", services);
+      console.log("Fetched orders:", ordersRes);
+      console.log("Fetched parts:", partsRes);
+      console.log("Fetched products:", productsRes);
+      console.log("Fetched part stock logs:", logs);
+      console.log("Fetched product stocks:", productStocksRes);
+
+      const techs = users.filter((u) => u.role === "technician");
+      console.log("Filtered technicians:", techs);
+
+      setUserRegistrations(users);
+      setServiceRequests(services);
+      setOrders(ordersRes);
+      setParts(partsRes);
+      setProducts(productsRes);
+      setPartStockLogs(logs);
+      setTechnicians(techs);
+      setProductStocks(productStocksRes);
+    };
+
+    fetchData();
+  }, [selectedPeriod]);
+
+  // Dynamic KPI Calculations
+  const kpiData = useMemo(
+    () => ({
+      totalUsers: userRegistrations.length,
+      activeServiceRequests: serviceRequests.filter((req) =>
+        ["pending", "scheduled", "in_progress"].includes(req.status)
+      ).length,
+      monthlyRevenue: orders.reduce(
+        (acc, order) => acc + (order.delivery_fee || 0),
+        0
+      ),
+      totalPartsStock: parts.reduce((acc, part) => acc + (part.stocks || 0), 0),
+    }),
+    [userRegistrations, serviceRequests, orders, parts]
+  );
+
+  // Payment Methods Distribution
+  const paymentMethods = useMemo(() => {
+    if (!orders.length) return [];
+    const methods = {};
+    orders.forEach((order) => {
+      const method = order.mode_of_payment || "Unknown";
+      methods[method] = (methods[method] || 0) + 1;
+    });
+    return Object.entries(methods).map(([name, value]) => ({ name, value }));
+  }, [orders]);
+
+  // Top Brands Calculation
+  const topBrands = useMemo(() => {
+    if (!products.length) return [];
+    const brandCounts = products.reduce((acc, product) => {
+      if (product.brand) {
+        acc[product.brand] = (acc[product.brand] || 0) + 1;
+      }
+      return acc;
+    }, {});
+    return Object.entries(brandCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+  }, [products]);
+
+  // Technician Performance Data
+  const technicianPerformance = useMemo(() => {
+    // Pre-calculate completed jobs per technician for efficiency
+    const completedJobsByTechnician = serviceRequests.reduce((acc, req) => {
+      if (req.status === "completed" && req.assigned_technician) {
+        acc[req.assigned_technician] = (acc[req.assigned_technician] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    return technicians
+      .map((tech) => ({
+        name: tech.name || tech.email,
+        completedJobs: completedJobsByTechnician[tech.id] || 0,
+        specialization: tech.technician_details?.specialization || "General",
+      }))
+      .filter((t) => t.completedJobs > 0)
+      .sort((a, b) => b.completedJobs - a.completedJobs);
+  }, [technicians, serviceRequests]);
+
+  // Registration Trends (users per day)
+  const registrationTrends = useMemo(() => {
+    if (!userRegistrations.length) return [];
+    const counts = {};
+    userRegistrations.forEach((user) => {
+      if (user.created) {
+        const date = new Date(user.created).toLocaleDateString();
+        counts[date] = (counts[date] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [userRegistrations]);
+
+  // Service Requests Trends (requests per day)
+  const serviceRequestTrends = useMemo(() => {
+    if (!serviceRequests.length) return [];
+    const counts = {};
+    serviceRequests.forEach((req) => {
+      if (req.created) {
+        const date = new Date(req.created).toLocaleDateString();
+        counts[date] = (counts[date] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [serviceRequests]);
+
+  // Revenue Trends (sum of delivery_fee per day)
+  const revenueTrends = useMemo(() => {
+    if (!orders.length) return [];
+    const sums = {};
+    orders.forEach((order) => {
+      if (order.created) {
+        const date = new Date(order.created).toLocaleDateString();
+        sums[date] = (sums[date] || 0) + (order.delivery_fee || 0);
+      }
+    });
+    return Object.entries(sums)
+      .map(([date, revenue]) => ({ date, revenue }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [orders]);
+
+  // User Roles Distribution
+  const userRolesDistribution = useMemo(() => {
+    if (!userRegistrations.length) return [];
+    const roles = {};
+    userRegistrations.forEach((user) => {
+      const role = user.role || "Unknown";
+      roles[role] = (roles[role] || 0) + 1;
+    });
+    return Object.entries(roles).map(([name, value]) => ({ name, value }));
+  }, [userRegistrations]);
+
+  // Service Request Status Distribution
+  const serviceRequestStatusDistribution = useMemo(() => {
+    if (!serviceRequests.length) return [];
+    const statuses = {};
+    serviceRequests.forEach((req) => {
+      const status = req.status || "Unknown";
+      statuses[status] = (statuses[status] || 0) + 1;
+    });
+    return Object.entries(statuses).map(([name, value]) => ({ name, value }));
+  }, [serviceRequests]);
+
+  // Top 5 Products by Stock
+  const topProductsByStock = useMemo(() => {
+    if (!products.length || !productStocks.length) return [];
+
+    const productStockMap = productStocks.reduce((acc, stockEntry) => {
+      acc[stockEntry.product_id] =
+        (acc[stockEntry.product_id] || 0) + (stockEntry.stock_quantity || 0);
+      return acc;
+    }, {});
+
+    const enrichedProducts = products
+      .map((product) => ({
+        name: product.product_name || `Product ID: ${product.id}`,
+        stock: productStockMap[product.id] || 0,
+      }))
+      .filter((p) => p.stock > 0);
+
+    return enrichedProducts.sort((a, b) => b.stock - a.stock).slice(0, 5);
+  }, [products, productStocks]);
+
+  return (
+    <main className="min-h-screen bg-gray-50 p-6 w-full overflow-auto">
+      <div className="max-w-7xl mx-auto">
+        {/* Header (can be a component too if complex) */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-gray-800">
+            Analytics Dashboard
+          </h2>
+          {/* Add period selector and view selector UI here if needed */}
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Total Users"
+            value={kpiData.totalUsers}
+            icon={<Icon icon="mdi:account-group" width="32" height="32" />}
+            color="#3b82f6" // Pass color to StatCard if it uses it for the icon
+          />
+          <StatCard
+            title="Active Service Requests"
+            value={kpiData.activeServiceRequests}
+            icon={<Icon icon="mdi:wrench" width="32" height="32" />}
+            color="#10b981"
+          />
+          <StatCard
+            title="Total Revenue (from period)"
+            value={`$${kpiData.monthlyRevenue.toLocaleString()}`}
+            icon={<Icon icon="mdi:currency-usd" width="32" height="32" />}
+            color="#8b5cf6"
+          />
+          <StatCard
+            title="Total Parts in Stock"
+            value={kpiData.totalPartsStock.toLocaleString()}
+            icon={<Icon icon="mdi:package-variant" width="32" height="32" />}
+            color="#f59e0b"
+          />
+        </div>
+
+        {/* Charts Section - Row 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <UserRegistrationsTrendCard data={registrationTrends} />
+          <ServiceRequestsTrendCard data={serviceRequestTrends} />
+          <RevenueTrendCard data={revenueTrends} />
+        </div>
+
+        {/* Charts Section - Row 2 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <UserRolesCard data={userRolesDistribution} PIE_COLORS={PIE_COLORS} />
+          <ServiceRequestStatusCard
+            data={serviceRequestStatusDistribution}
+            PIE_COLORS={PIE_COLORS}
+          />
+          <TopProductsByStockCard data={topProductsByStock} />
+        </div>
+
+        {/* Additional Insights Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <PaymentMethodsCard data={paymentMethods} PIE_COLORS={PIE_COLORS} />
+          <TopBrandsCard data={topBrands} />
+        </div>
+
+        {/* Technician Performance Section */}
+        {selectedView === "services" && (
+          <TechnicianPerformanceList technicians={technicianPerformance} />
+        )}
+      </div>
+    </main>
+  );
+};
+
+export default AnalyticsPage;
