@@ -59,8 +59,8 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh, userRole }) => {
             size={"lg"}
             className={"bg-[#5CCFBC]"}
             onClick={() => setIsProductFormOpen(true)}
-            disabled={userRole !== 'super-admin'}
-            title={userRole !== 'super-admin' ? 'Only super-admin can add products' : undefined}
+            disabled={userRole === 'super-admin'} // Corrected: Disable only for super-admin
+            title={userRole === 'super-admin' ? 'Super-admin cannot add products' : 'Add new product'}
           >
             <Icon icon="mingcute:add-line" className="size-6" /> Add Product
           </Button>

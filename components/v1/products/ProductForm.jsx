@@ -168,6 +168,13 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess, userRole 
 
   // Form submission handler
   const onSubmit = async (data) => {
+    // Check if the user has the 'admin' role
+    if (userRole !== 'admin') {
+      alert("Only 'admin' users can create products."); // Or use a more sophisticated notification
+      setIsSubmitting(false); // Ensure isSubmitting is reset if it was set before this check
+      return; // Prevent form submission
+    }
+
     setIsSubmitting(true);
 
     try {
