@@ -15,7 +15,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-white p-2 shadow-md border border-gray-200 rounded-md">
         <p className="font-medium">{label}</p>
-        <p className="text-gray-700">{`Revenue: $${payload[0].value.toLocaleString()}`}</p>
+        <p className="text-gray-700">{`Revenue: ₱${payload[0].value.toLocaleString()}`}</p>
       </div>
     );
   }
@@ -52,7 +52,7 @@ const RevenueTrendCard = ({ data }) => {
             tick={{ fontSize: 12 }}
             tickLine={true}
             axisLine={true}
-            tickFormatter={(value) => `$${value}`}
+            tickFormatter={(value) => `₱${value}`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ paddingTop: 10 }} />
@@ -76,13 +76,13 @@ const RevenueTrendCard = ({ data }) => {
         {data.length > 0 && (
           <div className="mt-2 text-sm text-gray-600">
             <p>
-              Total revenue: $
+              Total revenue: ₱
               {data
                 .reduce((sum, item) => sum + item.revenue, 0)
                 .toLocaleString()}
             </p>
             <p>
-              Average per period: $
+              Average per period: ₱
               {(data.reduce((sum, item) => sum + item.revenue, 0) / data.length)
                 .toFixed(2)
                 .toLocaleString()}

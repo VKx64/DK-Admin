@@ -13,6 +13,8 @@ import UserRolesCard from "@/components/v1/analytics/UserRolesCard";
 import ServiceRequestStatusCard from "@/components/v1/analytics/ServiceRequestStatusCard";
 import TopProductsByStockCard from "@/components/v1/analytics/TopProductsByStockCard";
 import TechnicianPerformanceList from "@/components/v1/analytics/TechnicianPerformanceList";
+import BestSellingProductService from "@/components/v1/analytics/BestSellingProductService";
+import RevenueByStock from "@/components/v1/analytics/RevenueByStock";
 
 // Define PIE_COLORS for Pie Charts, to be passed to relevant card components
 const PIE_COLORS = [
@@ -37,10 +39,10 @@ const AnalyticsPage = () => {
   const [partStockLogs, setPartStockLogs] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [productStocks, setProductStocks] = useState([]);
+  const [productPricings, setProductPricings] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const [
+    const fetchData = async () => {      const [
         users,
         services,
         ordersRes,
@@ -48,14 +50,16 @@ const AnalyticsPage = () => {
         productsRes,
         logs,
         productStocksRes,
+        productPricingsRes,
       ] = await Promise.all([
-        pb.collection("users").getFullList(),
-        pb.collection("service_request").getFullList(),
-        pb.collection("user_order").getFullList(),
-        pb.collection("parts").getFullList(),
-        pb.collection("products").getFullList(),
-        pb.collection("part_stock_log").getFullList(),
-        pb.collection("product_stocks").getFullList(),
+        pb.collection("users").getFullList({ requestKey: null }),
+        pb.collection("service_request").getFullList({ requestKey: null }),
+        pb.collection("user_order").getFullList({ requestKey: null }),
+        pb.collection("parts").getFullList({ requestKey: null }),
+        pb.collection("products").getFullList({ requestKey: null }),
+        pb.collection("part_stock_log").getFullList({ requestKey: null }),
+        pb.collection("product_stocks").getFullList({ requestKey: null }),
+        pb.collection("product_pricing").getFullList({ requestKey: null }),
       ]);
 
       console.log("Fetched users:", users);
@@ -65,6 +69,7 @@ const AnalyticsPage = () => {
       console.log("Fetched products:", productsRes);
       console.log("Fetched part stock logs:", logs);
       console.log("Fetched product stocks:", productStocksRes);
+      console.log("Fetched product pricings:", productPricingsRes);
 
       const techs = users.filter((u) => u.role === "technician");
       console.log("Filtered technicians:", techs);
@@ -77,10 +82,64 @@ const AnalyticsPage = () => {
       setPartStockLogs(logs);
       setTechnicians(techs);
       setProductStocks(productStocksRes);
+      setProductPricings(productPricingsRes);
     };
 
     fetchData();
   }, [selectedPeriod]);
+
+  const bestSellingCombos = useMemo(() => {
+    if (!serviceRequests.length) return [];
+
+    const combos = serviceRequests.reduce((acc, record) => {
+      const key = `${record.product} - ${record.problem}`;
+      if (acc[key]) {
+        acc[key].count += 1;
+      } else {
+        acc[key] = {
+          product: record.product,
+          service: record.problem,
+          count: 1,
+        };
+      }
+      return acc;
+    }, {});
+
+    return Object.values(combos).sort((a, b) => b.count - a.count);
+  }, [serviceRequests]);
+
+  const revenueByStockData = useMemo(() => {
+    if (!orders.length || !products.length || !productPricings.length) {
+      return [];
+    }
+
+    const productPriceMap = productPricings.reduce((acc, pricing) => {
+      acc[pricing.product_id] = pricing.final_price || 0;
+      return acc;
+    }, {});
+
+    const revenueMap = orders.reduce((acc, order) => {
+      if (order.products) {
+        order.products.forEach((productId) => {
+          const price = productPriceMap[productId] || 0;
+          acc[productId] = (acc[productId] || 0) + price;
+        });
+      }
+      return acc;
+    }, {});
+
+    const enrichedData = Object.entries(revenueMap)
+      .map(([productId, revenue]) => {
+        const product = products.find((p) => p.id === productId);
+        return {
+          name: product ? product.product_name : `Product ID: ${productId}`,
+          revenue,
+        };
+      })
+      .sort((a, b) => b.revenue - a.revenue);
+
+    return enrichedData;
+  }, [orders, products, productPricings]);
 
   // Dynamic KPI Calculations
   const kpiData = useMemo(
@@ -258,7 +317,7 @@ const AnalyticsPage = () => {
           />
           <StatCard
             title="Total Revenue (from period)"
-            value={`$${kpiData.monthlyRevenue.toLocaleString()}`}
+            value={`₱${kpiData.monthlyRevenue.toLocaleString()}`}
             icon={<Icon icon="mdi:currency-usd" width="32" height="32" />}
             color="#8b5cf6"
           />
@@ -295,7 +354,14 @@ const AnalyticsPage = () => {
 
         {/* Technician Performance Section */}
         {selectedView === "services" && (
-          <TechnicianPerformanceList technicians={technicianPerformance} />
+          <TechnicianPerformanceList technicians={technicians} serviceRequests={serviceRequests} />
+        )}
+
+        {selectedView === "overview" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <BestSellingProductService data={bestSellingCombos} />
+            <RevenueByStock data={revenueByStockData} />
+          </div>
         )}
       </div>
     </main>
