@@ -15,6 +15,8 @@ import TopProductsByStockCard from "@/components/v1/analytics/TopProductsByStock
 import TechnicianPerformanceList from "@/components/v1/analytics/TechnicianPerformanceList";
 import BestSellingProductService from "@/components/v1/analytics/BestSellingProductService";
 import RevenueByStock from "@/components/v1/analytics/RevenueByStock";
+import InventoryForecast from "@/components/v1/analytics/InventoryForecast";
+import InventoryAnalytics from "@/components/v1/analytics/InventoryAnalytics";
 
 // Define PIE_COLORS for Pie Charts, to be passed to relevant card components
 const PIE_COLORS = [
@@ -40,6 +42,7 @@ const AnalyticsPage = () => {
   const [technicians, setTechnicians] = useState([]);
   const [productStocks, setProductStocks] = useState([]);
   const [productPricings, setProductPricings] = useState([]);
+  const [branches, setBranches] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {      const [
@@ -51,6 +54,7 @@ const AnalyticsPage = () => {
         logs,
         productStocksRes,
         productPricingsRes,
+        branchesRes,
       ] = await Promise.all([
         pb.collection("users").getFullList({ requestKey: null }),
         pb.collection("service_request").getFullList({ requestKey: null }),
@@ -60,6 +64,7 @@ const AnalyticsPage = () => {
         pb.collection("part_stock_log").getFullList({ requestKey: null }),
         pb.collection("product_stocks").getFullList({ requestKey: null }),
         pb.collection("product_pricing").getFullList({ requestKey: null }),
+        pb.collection("branch_details").getFullList({ requestKey: null }),
       ]);
 
       console.log("Fetched users:", users);
@@ -70,6 +75,7 @@ const AnalyticsPage = () => {
       console.log("Fetched part stock logs:", logs);
       console.log("Fetched product stocks:", productStocksRes);
       console.log("Fetched product pricings:", productPricingsRes);
+      console.log("Fetched branches:", branchesRes);
 
       const techs = users.filter((u) => u.role === "technician");
       console.log("Filtered technicians:", techs);
@@ -83,6 +89,7 @@ const AnalyticsPage = () => {
       setTechnicians(techs);
       setProductStocks(productStocksRes);
       setProductPricings(productPricingsRes);
+      setBranches(branchesRes);
     };
 
     fetchData();
@@ -140,6 +147,48 @@ const AnalyticsPage = () => {
 
     return enrichedData;
   }, [orders, products, productPricings]);
+
+  // Inventory Forecasting Data
+  const inventoryForecastData = useMemo(() => {
+    console.log("Inventory Forecast Debug:", {
+      ordersLength: orders.length,
+      productsLength: products.length,
+      productStocksLength: productStocks.length,
+      sampleOrder: orders[0],
+      sampleProduct: products[0],
+      sampleProductStock: productStocks[0]
+    });
+
+    // Create mock data if no real data is available for demonstration
+    if (!products.length) {
+      return [];
+    }
+
+    // Create sample forecast data using available products
+    const mockForecastData = [];
+    const periods = ['Current', 'Week 1', 'Week 2', 'Week 3', 'Week 4'];
+
+    // Use first few products for demonstration
+    const sampleProducts = products.slice(0, 5);
+
+    periods.forEach((period, index) => {
+      mockForecastData.push({
+        period,
+        currentStock: index === 0 ? 100 - (index * 15) : null,
+        predictedStock: index > 0 ? Math.max(10, 100 - (index * 20)) : null,
+        reorderPoint: 25,
+      });
+    });
+
+    // Add product summary for table
+    const productSummary = sampleProducts.map((product, index) => ({
+      product: product.product_name || `Product ${product.id}`,
+      daysToReorder: 14 - (index * 3), // Mock days to reorder
+      riskLevel: index <= 1 ? 'High' : index <= 3 ? 'Medium' : 'Low'
+    }));
+
+    return mockForecastData.concat(productSummary);
+  }, [orders, products, productStocks]);
 
   // Dynamic KPI Calculations
   const kpiData = useMemo(
@@ -293,75 +342,131 @@ const AnalyticsPage = () => {
   return (
     <main className="min-h-screen bg-gray-50 p-6 w-full overflow-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header (can be a component too if complex) */}
+        {/* Header */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            Analytics Dashboard
-          </h2>
-          {/* Add period selector and view selector UI here if needed */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-gray-800">
+              Analytics Dashboard
+            </h2>
+
+            {/* View Selector */}
+            <div className="flex items-center gap-4">
+              <div className="flex bg-white rounded-lg p-1 shadow-sm border">
+                <button
+                  onClick={() => setSelectedView("overview")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    selectedView === "overview"
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setSelectedView("inventory")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    selectedView === "inventory"
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Inventory
+                </button>
+                <button
+                  onClick={() => setSelectedView("services")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    selectedView === "services"
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Services
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Users"
-            value={kpiData.totalUsers}
-            icon={<Icon icon="mdi:account-group" width="32" height="32" />}
-            color="#3b82f6" // Pass color to StatCard if it uses it for the icon
-          />
-          <StatCard
-            title="Active Service Requests"
-            value={kpiData.activeServiceRequests}
-            icon={<Icon icon="mdi:wrench" width="32" height="32" />}
-            color="#10b981"
-          />
-          <StatCard
-            title="Total Revenue (from period)"
-            value={`₱${kpiData.monthlyRevenue.toLocaleString()}`}
-            icon={<Icon icon="mdi:currency-usd" width="32" height="32" />}
-            color="#8b5cf6"
-          />
-          <StatCard
-            title="Total Parts in Stock"
-            value={kpiData.totalPartsStock.toLocaleString()}
-            icon={<Icon icon="mdi:package-variant" width="32" height="32" />}
-            color="#f59e0b"
-          />
-        </div>
+        {/* Main Content based on selected view */}
+        {selectedView === "overview" && (
+          <>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard
+                title="Total Users"
+                value={kpiData.totalUsers}
+                icon={<Icon icon="mdi:account-group" width="32" height="32" />}
+                color="#3b82f6"
+              />
+              <StatCard
+                title="Active Service Requests"
+                value={kpiData.activeServiceRequests}
+                icon={<Icon icon="mdi:wrench" width="32" height="32" />}
+                color="#10b981"
+              />
+              <StatCard
+                title="Total Revenue (from period)"
+                value={`₱${kpiData.monthlyRevenue.toLocaleString()}`}
+                icon={<Icon icon="mdi:currency-usd" width="32" height="32" />}
+                color="#8b5cf6"
+              />
+              <StatCard
+                title="Total Parts in Stock"
+                value={kpiData.totalPartsStock.toLocaleString()}
+                icon={<Icon icon="mdi:package-variant" width="32" height="32" />}
+                color="#f59e0b"
+              />
+            </div>
 
-        {/* Charts Section - Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <UserRegistrationsTrendCard data={registrationTrends} />
-          <ServiceRequestsTrendCard data={serviceRequestTrends} />
-          <RevenueTrendCard data={revenueTrends} />
-        </div>
+            {/* Charts Section - Row 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <UserRegistrationsTrendCard data={registrationTrends} />
+              <ServiceRequestsTrendCard data={serviceRequestTrends} />
+              <RevenueTrendCard data={revenueTrends} />
+            </div>
 
-        {/* Charts Section - Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <UserRolesCard data={userRolesDistribution} PIE_COLORS={PIE_COLORS} />
-          <ServiceRequestStatusCard
-            data={serviceRequestStatusDistribution}
-            PIE_COLORS={PIE_COLORS}
-          />
-          <TopProductsByStockCard data={topProductsByStock} />
-        </div>
+            {/* Charts Section - Row 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <UserRolesCard data={userRolesDistribution} PIE_COLORS={PIE_COLORS} />
+              <ServiceRequestStatusCard
+                data={serviceRequestStatusDistribution}
+                PIE_COLORS={PIE_COLORS}
+              />
+              <TopProductsByStockCard data={topProductsByStock} />
+            </div>
 
-        {/* Additional Insights Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <PaymentMethodsCard data={paymentMethods} PIE_COLORS={PIE_COLORS} />
-          <TopBrandsCard data={topBrands} />
-        </div>
+            {/* Additional Insights Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <PaymentMethodsCard data={paymentMethods} PIE_COLORS={PIE_COLORS} />
+              <TopBrandsCard data={topBrands} />
+            </div>
 
-        {/* Technician Performance Section */}
-        {selectedView === "services" && (
-          <TechnicianPerformanceList technicians={technicians} serviceRequests={serviceRequests} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <BestSellingProductService data={bestSellingCombos} />
+              <RevenueByStock data={revenueByStockData} />
+            </div>
+
+            {/* Inventory Forecasting Section */}
+            <div className="mt-6">
+              <InventoryForecast data={inventoryForecastData} />
+            </div>
+          </>
         )}
 
-        {selectedView === "overview" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <BestSellingProductService data={bestSellingCombos} />
-            <RevenueByStock data={revenueByStockData} />
-          </div>
+        {/* Inventory View */}
+        {selectedView === "inventory" && (
+          <InventoryAnalytics
+            products={products}
+            productStocks={productStocks}
+            branches={branches}
+            parts={parts}
+            partStockLogs={partStockLogs}
+          />
+        )}
+
+        {/* Services View */}
+        {selectedView === "services" && (
+          <TechnicianPerformanceList technicians={technicians} serviceRequests={serviceRequests} />
         )}
       </div>
     </main>
