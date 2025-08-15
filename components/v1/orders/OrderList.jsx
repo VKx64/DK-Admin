@@ -4,10 +4,10 @@ import Filters from './Filters';
 import DataTable from './DataTable';
 import OrderDetailsDialog from './OrderDetailsDialog';
 import { Button } from '@/components/ui/button';
-import { getAllOrders } from '@/services/pocketbase/readOrders';
+import { getAllOrders, getOrdersByRole } from '@/services/pocketbase/readOrders';
 import { getProductWithAllData } from '@/services/pocketbase/readProducts';
 
-const OrderList = forwardRef(({ searchQuery = "", onDataChanged, userRole }, ref) => {
+const OrderList = forwardRef(({ searchQuery = "", onDataChanged, user }, ref) => {
   // State for order data
   const [orderData, setOrderData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,8 +44,11 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, userRole }, ref
     const fetchOrders = async () => {
       setIsLoading(true);
       try {
-        // Get all orders using the existing function
-        const allOrders = await getAllOrders();
+        // Use role-based filtering if user is available
+        const allOrders = user
+          ? await getOrdersByRole(user)
+          : await getAllOrders();
+
         setOrderData(allOrders);
 
         // Apply filters and pagination
@@ -59,7 +62,7 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, userRole }, ref
     };
 
     fetchOrders();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, user]);
 
   // Apply filters and pagination when dependencies change
   useEffect(() => {
@@ -137,6 +140,27 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, userRole }, ref
   return (
     <div className='w-full flex-1 flex flex-col gap-4'>
       <div className='w-full bg-white rounded-sm shadow-sm p-4 flex flex-col gap-4 overflow-hidden'>
+        {/* Role-based filtering info */}
+        {user && (
+          <div className="text-xs bg-blue-50 border border-blue-200 rounded p-2">
+            {user.role === 'super-admin' && (
+              <span className="text-blue-700">
+                ℹ️ Viewing all orders from all branches (Super Admin)
+              </span>
+            )}
+            {user.role === 'admin' && (
+              <span className="text-blue-700">
+                ℹ️ Viewing orders from your assigned branch only (Admin)
+              </span>
+            )}
+            {user.role !== 'super-admin' && user.role !== 'admin' && (
+              <span className="text-blue-700">
+                ℹ️ Viewing your orders only
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Filter component */}
         <Filters
           searchQuery={searchQuery}
@@ -174,7 +198,7 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, userRole }, ref
             onTableReady={handleTableReady}
             onDataChanged={handleDataChanged}
             onViewOrder={handleViewOrder}
-            userRole={userRole}
+            user={user}
           />
         )}
 
@@ -215,7 +239,7 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, userRole }, ref
           setIsDetailsDialogOpen(open);
           if (!open) setViewingOrder(null);
         }}
-        userRole={userRole}
+        user={user}
       />
     </div>
   );

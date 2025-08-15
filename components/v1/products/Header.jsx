@@ -5,6 +5,7 @@ import SearchBar from "../SearchBar";
 import { Button } from "@/components/ui/button";
 import ProductForm from "./ProductForm";
 import { RefreshCw } from "lucide-react"; // Import the Lucide React refresh icon
+import { canManageProducts } from "@/utils/roleUtils";
 
 const Header = ({ onSearchChange, onProductAdded, onRefresh, userRole }) => {
   // State to control the product form dialog
@@ -55,15 +56,15 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh, userRole }) => {
               className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button
-            size={"lg"}
-            className={"bg-[#5CCFBC]"}
-            onClick={() => setIsProductFormOpen(true)}
-            disabled={userRole === 'super-admin'} // Corrected: Disable only for super-admin
-            title={userRole === 'super-admin' ? 'Super-admin cannot add products' : 'Add new product'}
-          >
-            <Icon icon="mingcute:add-line" className="size-6" /> Add Product
-          </Button>
+          {canManageProducts(userRole) && (
+            <Button
+              size={"lg"}
+              className={"bg-[#5CCFBC]"}
+              onClick={() => setIsProductFormOpen(true)}
+            >
+              <Icon icon="mingcute:add-line" className="size-6" /> Add Product
+            </Button>
+          )}
         </div>
       </div>
 

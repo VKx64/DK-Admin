@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
-import { pb } from '@/lib/pocketbase';
+import pb from '@/services/pocketbase';
 
 /**
  * EditTechnician - Component for editing technician information in a dialog

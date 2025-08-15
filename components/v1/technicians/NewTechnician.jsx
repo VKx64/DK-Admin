@@ -18,7 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
-import { pb } from '@/lib/pocketbase';
+import pb from '@/services/pocketbase';
 import {
   Form,
   FormControl,

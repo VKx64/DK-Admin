@@ -1,7 +1,7 @@
 // src/AuthContext.js
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import { pb } from "../lib/pocketbase"; // Adjust path
+import pb from "../services/pocketbase"; // Adjust path
 import { useRouter } from "next/navigation";
 
 const AuthContext = createContext(undefined);

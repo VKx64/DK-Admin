@@ -10,6 +10,7 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { Icon } from "@iconify/react";
+import { canManagePricing } from "@/utils/roleUtils";
 
 const Filters = ({
   searchQuery = "",
@@ -77,18 +78,18 @@ const Filters = ({
 
       {/* Discount Filter */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex flex-row items-center gap-2.5 bg-[#EFEFEF] rounded-sm px-3 py-2" disabled={userRole !== 'super-admin'}>
+        <DropdownMenuTrigger className="flex flex-row items-center gap-2.5 bg-[#EFEFEF] rounded-sm px-3 py-2" disabled={!canManagePricing(userRole)}>
           <p className="font-raleway font-medium text-xs text-[#3D3D3D]">Discount</p>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => onDiscountSortChange('lowToHigh')} disabled={userRole !== 'super-admin'}>
+          <DropdownMenuItem onClick={() => onDiscountSortChange('lowToHigh')} disabled={!canManagePricing(userRole)}>
             Lowest to Highest
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onDiscountSortChange('highToLow')} disabled={userRole !== 'super-admin'}>
+          <DropdownMenuItem onClick={() => onDiscountSortChange('highToLow')} disabled={!canManagePricing(userRole)}>
             Highest to Lowest
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onDiscountSortChange('')} disabled={userRole !== 'super-admin'}>
+          <DropdownMenuItem onClick={() => onDiscountSortChange('')} disabled={!canManagePricing(userRole)}>
             Clear Filter
           </DropdownMenuItem>
         </DropdownMenuContent>

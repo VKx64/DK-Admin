@@ -16,7 +16,7 @@ const OrderDetailsDialog = ({
   order,
   open,
   onOpenChange,
-  userRole
+  user
 }) => {
   // State for storing product details
   const [products, setProducts] = useState([]);
@@ -251,6 +251,27 @@ const OrderDetailsDialog = ({
           </div>
         </div>
 
+        {/* Branch Information (only for super-admin) */}
+        {user?.role === 'super-admin' && (
+          <div className="mt-4">
+            <h3 className="font-semibold mb-2">Branch Information</h3>
+            <div className="text-sm bg-blue-50 p-3 rounded-md">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Branch Name:</span>
+                <span className="font-medium">{order.expand?.branch?.branch_name || "N/A"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Manager:</span>
+                <span>{order.expand?.branch?.manager_name || "N/A"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Email:</span>
+                <span>{order.expand?.branch?.branch_email || "N/A"}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Shipping Address */}
         <div className="mt-4">
           <h3 className="font-semibold mb-2">Shipping Address</h3>
@@ -390,7 +411,7 @@ const OrderDetailsDialog = ({
                   </div>
                 </DropdownMenuItem>
                 {/* Only allow 'Approved' and 'Declined' for super-admins if status is Pending */}
-                {!(status === 'Pending' && userRole === 'admin') && (
+                {!(status === 'Pending' && user?.role === 'admin') && (
                   <DropdownMenuItem onClick={() => handleStatusChange('Approved')}>
                     <div className="flex items-center">
                       {status === 'Approved' && <CheckIcon className="mr-2 h-4 w-4" />}
@@ -398,7 +419,7 @@ const OrderDetailsDialog = ({
                     </div>
                   </DropdownMenuItem>
                 )}
-                {!(status === 'Pending' && userRole === 'admin') && (
+                {!(status === 'Pending' && user?.role === 'admin') && (
                   <DropdownMenuItem onClick={() => handleStatusChange('Declined')}>
                     <div className="flex items-center">
                       {status === 'Declined' && <CheckIcon className="mr-2 h-4 w-4" />}

@@ -25,20 +25,23 @@ const ProductsPage = () => {
   };
 
   return (
-    <div className='h-full w-full flex-1 px-5 py-3 bg-[#EAEFF8] gap-4 flex flex-col'>
+    <div className='h-full w-full px-5 py-3 bg-[#EAEFF8] gap-4 flex flex-col overflow-hidden'>
       {/* Header with Add Product button */}
       <Header
         onSearchChange={handleSearchChange}
         onProductAdded={handleDataChanged}
         onRefresh={handleDataChanged}
-      />
-
-      {/* Products Table */}
-      <ProductList
-        searchQuery={searchQuery}
-        onDataChanged={handleDataChanged}
         userRole={userRole}
       />
+
+      {/* Products Table - This container will handle the scrolling */}
+      <div className='flex-1 overflow-auto'>
+        <ProductList
+          searchQuery={searchQuery}
+          onDataChanged={handleDataChanged}
+          userRole={userRole}
+        />
+      </div>
     </div>
   )
 }

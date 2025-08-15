@@ -17,7 +17,7 @@ import {
   flexRender,
   getSortedRowModel,
 } from '@tanstack/react-table'
-import { pb } from '@/lib/pocketbase'
+import pb from '@/services/pocketbase'
 import { toast } from "sonner"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"

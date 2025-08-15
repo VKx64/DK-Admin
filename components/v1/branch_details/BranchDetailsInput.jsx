@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from "react";
 import pb from "@/services/pocketbase";
 import { Icon } from "@iconify/react";
+import { useAuth } from "@/context/AuthContext";
 
 const BranchDetailsInput = () => {
+  const { user } = useAuth();
   const [branchDetails, setBranchDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
-  const [user, setUser] = useState(null); // Add user state
 
   // Form state
   const [branchName, setBranchName] = useState("");
@@ -18,11 +19,8 @@ const BranchDetailsInput = () => {
   const [branchLongitude, setBranchLongitude] = useState("");
   const [branchImagePreview, setBranchImagePreview] = useState(null);
 
-  // Get current user on mount
-  useEffect(() => {
-    const currentUser = pb.authStore.model;
-    setUser(currentUser);
-  }, []);
+  const isSuperAdmin = user?.role === "super-admin";
+  const isAdmin = user?.role === "admin";
 
   // Fetch branch details when user is available
   useEffect(() => {
@@ -31,12 +29,23 @@ const BranchDetailsInput = () => {
 
       setLoading(true);
       try {
-        // Fixed: Change admin_id to user_id to match your database structure
-        const result = await pb.collection("branch_details").getFullList({
-          filter: `user_id="${user.id}"`,
-        });
-        if (result.length > 0) {
-          setBranchDetails(result[0]);
+        let result;
+
+        if (isSuperAdmin) {
+          // Super admin can see all branch details
+          result = await pb.collection("branch_details").getFullList({
+            requestKey: null
+          });
+        } else if (isAdmin) {
+          // Regular admin can only see their own branch details
+          result = await pb.collection("branch_details").getFullList({
+            filter: `user_id="${user.id}"`,
+            requestKey: null
+          });
+        }
+
+        if (result && result.length > 0) {
+          setBranchDetails(result[0]); // For individual view, take first result
         } else {
           setBranchDetails(null);
         }
@@ -48,7 +57,7 @@ const BranchDetailsInput = () => {
     };
 
     fetchBranchDetails();
-  }, [user]); // Add user as dependency
+  }, [user, isSuperAdmin, isAdmin]); // Add role dependencies
 
   // Fill form fields when entering edit mode
   useEffect(() => {
@@ -100,16 +109,26 @@ const BranchDetailsInput = () => {
         // Update existing branch
         await pb
           .collection("branch_details")
-          .update(branchDetails.id, formData);
+          .update(branchDetails.id, formData, { requestKey: null });
       } else {
         // Create new branch
-        await pb.collection("branch_details").create(formData);
+        await pb.collection("branch_details").create(formData, {
+          requestKey: null
+        });
       }
       // Fetch and display the new details
-      const result = await pb.collection("branch_details").getFullList({
-        filter: `user_id="${user.id}"`, // Fixed: Change admin_id to user_id
-      });
-      setBranchDetails(result[0]);
+      if (isSuperAdmin) {
+        const result = await pb.collection("branch_details").getFullList({
+          requestKey: null
+        });
+        setBranchDetails(result[0]);
+      } else {
+        const result = await pb.collection("branch_details").getFullList({
+          filter: `user_id="${user.id}"`,
+          requestKey: null
+        });
+        setBranchDetails(result[0]);
+      }
       setEditMode(false);
     } catch (error) {
       console.error("Error submitting branch details:", error);
@@ -119,7 +138,26 @@ const BranchDetailsInput = () => {
 
   // Show loading if no user or still loading
   if (!user || loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  // Check permissions
+  if (!isSuperAdmin && !isAdmin) {
+    return (
+      <div className="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100 max-w-2xl">
+        <div className="text-center">
+          <Icon icon="mdi:lock" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Access Denied</h3>
+          <p className="text-gray-500">
+            You don't have permission to manage branch details.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // If branch details exist and not in edit mode, display them with edit button

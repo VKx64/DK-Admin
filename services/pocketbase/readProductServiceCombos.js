@@ -1,4 +1,4 @@
-import pocketbase from "@/lib/pocketbase";
+import pb from "./pocketbase";
 
 export async function getProductServiceCombos() {
   try {

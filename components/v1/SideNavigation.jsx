@@ -24,7 +24,7 @@ const SideNavigation = () => {
   };
 
   return (
-    <div className='w-1/6 bg-[#0A1727] flex flex-col items-center pt-12 pb-3 px-5 gap-6'>
+    <div className='w-1/6 bg-[#0A1727] flex flex-col items-center pt-12 pb-3 px-5 gap-6 fixed left-0 top-0 h-screen overflow-y-auto'>
 
       <UserDetails />
 
@@ -40,8 +40,10 @@ const SideNavigation = () => {
 
         {/* Super Admin Role */}
         {(isSuperAdmin) && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"Branch"} href={'/branch'} />}
+        {(isSuperAdmin) && <ItemNavigation icon={"mingcute:basket-2-line"} text={"Branch Details"} href={'/branch_details'} />}
 
         {/* Admin Role */}
+        {(isAdmin) && <ItemNavigation icon={"mingcute:basket-2-line"} text={"My Branch"} href={'/branch_details'} />}
         {(isAdmin) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts"} href={'/parts'} />}
         {(isAdmin) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts Log"} href={'/parts_history'} />}
         {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:receive-money-line"} text={"Orders"} href={'/orders'} />}

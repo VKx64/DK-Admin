@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { createProductWithAllData } from "@/services/pocketbase/createProducts";
 import { updateProductWithAllData } from "@/services/pocketbase/updateProducts";
+import { canManageProducts, canManagePricing, canManageStock, getPermissionErrorMessage } from "@/utils/roleUtils";
 
 /**
  * ProductForm - A form component for creating or editing products using react-hook-form
@@ -168,10 +169,10 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess, userRole 
 
   // Form submission handler
   const onSubmit = async (data) => {
-    // Check if the user has the 'admin' role
-    if (userRole !== 'admin') {
-      alert("Only 'admin' users can create products."); // Or use a more sophisticated notification
-      setIsSubmitting(false); // Ensure isSubmitting is reset if it was set before this check
+    // Check if the user can manage products
+    if (!canManageProducts(userRole)) {
+      alert(getPermissionErrorMessage('add-product', userRole));
+      setIsSubmitting(false);
       return; // Prevent form submission
     }
 
@@ -426,9 +427,9 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess, userRole 
                         placeholder="0"
                         {...field}
                         className={errors.pricing?.discount ? "border-red-500" : ""}
-                        readOnly={userRole !== 'super-admin'}
-                        disabled={userRole !== 'super-admin'}
-                        title={userRole !== 'super-admin' ? 'Only super-admin can modify discount' : undefined}
+                        readOnly={!canManagePricing(userRole)}
+                        disabled={!canManagePricing(userRole)}
+                        title={!canManagePricing(userRole) ? 'Only super-admin can modify discount' : undefined}
                       />
                     )}
                   />
@@ -535,9 +536,9 @@ const ProductForm = ({ isOpen, onClose, productData = null, onSuccess, userRole 
                       placeholder="0"
                       {...field}
                       className={errors.stock?.stock_quantity ? "border-red-500" : ""}
-                      readOnly={userRole !== 'super-admin'}
-                      disabled={userRole !== 'super-admin'}
-                      title={userRole !== 'super-admin' ? 'Only super-admin can modify stock' : undefined}
+                      readOnly={!canManageStock(userRole)}
+                      disabled={!canManageStock(userRole)}
+                      title={!canManageStock(userRole) ? 'Only super-admin can modify stock' : undefined}
                     />
                   )}
                 />

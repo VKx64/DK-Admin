@@ -63,7 +63,7 @@ const DataTable = ({
   onTableReady,
   onDataChanged,
   onViewOrder,
-  userRole
+  user
 }) => {
   // State for delete confirmation dialog
   const [deleteDialog, setDeleteDialog] = useState({
@@ -136,6 +136,17 @@ const DataTable = ({
       },
       size: 150, // Adjusted size slightly for potentially longer names
     },
+
+    // Branch column (only for super-admin users)
+    ...(user?.role === 'super-admin' ? [{
+      id: "branchName",
+      header: () => <div className="text-left font-medium">Branch</div>,
+      cell: ({ row }) => {
+        const branchName = row.original.expand?.branch?.branch_name || "N/A";
+        return <div className="text-left">{branchName}</div>;
+      },
+      size: 120,
+    }] : []),
 
     // Order Date column
     {
@@ -215,7 +226,7 @@ const DataTable = ({
           if (
             (statusOption === 'Approved' || statusOption === 'Declined') &&
             status === 'Pending' &&
-            userRole === 'admin'
+            user?.role === 'admin'
           ) {
             return false;
           }
@@ -448,7 +459,7 @@ const DataTable = ({
                 className="text-green-600 border-green-200 hover:bg-green-50"
                 onClick={() => handleBulkStatusUpdate('Approved')}
                 disabled={
-                  userRole === 'admin' &&
+                  user?.role === 'admin' &&
                   data.filter((row) => rowSelection[row.id] && row.status === 'Pending').length > 0
                 }
               >
@@ -460,7 +471,7 @@ const DataTable = ({
                 className="text-red-600 border-red-200 hover:bg-red-50"
                 onClick={() => handleBulkStatusUpdate('Declined')}
                 disabled={
-                  userRole === 'admin' &&
+                  user?.role === 'admin' &&
                   data.filter((row) => rowSelection[row.id] && row.status === 'Pending').length > 0
                 }
               >

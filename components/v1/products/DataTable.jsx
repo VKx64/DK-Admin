@@ -42,6 +42,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { deleteProductWithAllData, deleteManyProducts } from '@/services/pocketbase/deleteProducts'
 import { updateBatchProductsRelatedData } from '@/services/pocketbase/updateProducts'
+import { canManageProducts, canManagePricing, getPermissionErrorMessage } from '@/utils/roleUtils'
 
 // Add styles to hide scrollbar but keep scrolling functionality
 if (typeof document !== 'undefined') {
@@ -216,8 +217,8 @@ const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataCh
             size="sm"
             className="h-8 w-8 p-0"
             onClick={() => handleEditProduct(row.original)}
-            disabled={userRole !== 'super-admin'}
-            title={userRole !== 'super-admin' ? 'Only super-admin can edit stocks/discount' : undefined}
+            disabled={!canManageProducts(userRole)}
+            title={!canManageProducts(userRole) ? 'Only super-admin can edit products' : 'Edit product'}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -395,8 +396,8 @@ const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataCh
                 size="sm"
                 onClick={handleBatchDiscountConfirmation}
                 className="mr-2"
-                disabled={userRole !== 'super-admin'}
-                title={userRole !== 'super-admin' ? 'Only super-admin can apply batch discount' : undefined}
+                disabled={!canManagePricing(userRole)}
+                title={!canManagePricing(userRole) ? getPermissionErrorMessage('batch-discount', userRole) : 'Apply batch discount'}
               >
                 <Percent className="h-4 w-4 mr-1" /> Apply Discount
               </Button>

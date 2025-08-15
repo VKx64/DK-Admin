@@ -1,5 +1,5 @@
-// Import the PocketBase client from our lib folder
-import { pb } from "../../lib/pocketbase";
+// Import the PocketBase client from services folder
+import pb from "../pocketbase";
 
 // FUNCTION TO UPDATE BASIC ORDER INFORMATION
 export async function updateOrder(id, orderData) {

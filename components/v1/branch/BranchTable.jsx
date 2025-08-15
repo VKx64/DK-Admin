@@ -18,8 +18,8 @@ import {
   getSortedRowModel,
 } from "@tanstack/react-table";
 
-const BranchTable = ({ users = [], isLoading = false, onView, onEdit, onDelete }) => {
-  const columns = [
+const BranchTable = React.memo(({ users = [], isLoading = false, onView, onEdit, onDelete }) => {
+  const columns = React.useMemo(() => [
     {
       id: "avatar",
       header: () => <div className="text-center font-medium">Profile</div>,
@@ -87,13 +87,14 @@ const BranchTable = ({ users = [], isLoading = false, onView, onEdit, onDelete }
       ),
       size: 120,
     },
-  ];
+  ], [onView, onEdit, onDelete]);
 
   const table = useReactTable({
     data: users || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.id || `row-${Date.now()}-${Math.random()}`,
   });
 
   if (isLoading) {
@@ -105,15 +106,15 @@ const BranchTable = ({ users = [], isLoading = false, onView, onEdit, onDelete }
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-white" key={`branch-table-${users.length}`}>
       <div className="overflow-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={`header-group-${headerGroup.id}`}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
-                    key={header.id}
+                    key={`header-${header.id}`}
                     className="px-4 py-3 bg-gray-50"
                     style={{ width: header.column.columnDef.size }}
                   >
@@ -128,10 +129,10 @@ const BranchTable = ({ users = [], isLoading = false, onView, onEdit, onDelete }
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={`admin-${row.original.id || row.id}`}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
-                      key={cell.id}
+                      key={`cell-${row.original.id || row.id}-${cell.column.id}`}
                       className="px-4 py-3"
                       style={{ width: cell.column.columnDef.size }}
                     >
@@ -141,7 +142,7 @@ const BranchTable = ({ users = [], isLoading = false, onView, onEdit, onDelete }
                 </TableRow>
               ))
             ) : (
-              <TableRow>
+              <TableRow key="no-data">
                 <TableCell colSpan={columns.length} className="h-24 text-center">
                   No admins found.
                 </TableCell>
@@ -152,6 +153,6 @@ const BranchTable = ({ users = [], isLoading = false, onView, onEdit, onDelete }
       </div>
     </div>
   );
-};
+});
 
 export default BranchTable;

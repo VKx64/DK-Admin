@@ -1,5 +1,5 @@
-// Import the PocketBase client from our lib folder
-import { pb } from "../../lib/pocketbase";
+// Import the PocketBase client from services folder
+import pb from "../pocketbase";
 
 // FUNCTION TO GET ALL USERS
 export async function getAllUsers() {

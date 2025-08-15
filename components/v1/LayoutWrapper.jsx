@@ -8,9 +8,11 @@ export default function LayoutWrapper({ children }) {
   const showSideNav = pathname !== '/authentication';
 
   return (
-    <>
+    <div className="flex w-full h-full">
       {showSideNav && <SideNavigation />}
-      {children}
-    </>
+      <main className={`flex-1 ${showSideNav ? 'ml-[16.666667%]' : ''} overflow-auto h-screen`}>
+        {children}
+      </main>
+    </div>
   );
 }

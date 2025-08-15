@@ -19,31 +19,34 @@ const Page = () => {
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchAdmins = () => {
+  const fetchAdmins = React.useCallback(() => {
     setLoading(true);
     getUsersByRole('admin')
-      .then((users) => setAdmins(users))
+      .then((users) => setAdmins(users || []))
       .catch(() => setAdmins([]))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     fetchAdmins();
-  }, []);
+  }, [fetchAdmins]);
 
-  const handleView = (admin) => {
+  const handleView = React.useCallback((admin) => {
     setSelectedAdmin(admin);
     setViewOpen(true);
-  };
-  const handleEdit = (admin) => {
+  }, []);
+
+  const handleEdit = React.useCallback((admin) => {
     setSelectedAdmin(admin);
     setEditOpen(true);
-  };
-  const handleDelete = (admin) => {
+  }, []);
+
+  const handleDelete = React.useCallback((admin) => {
     setSelectedAdmin(admin);
     setDeleteOpen(true);
-  };
-  const handleDeleteConfirm = async () => {
+  }, []);
+
+  const handleDeleteConfirm = React.useCallback(async () => {
     if (!selectedAdmin) return;
     setDeleting(true);
     try {
@@ -57,11 +60,11 @@ const Page = () => {
     } finally {
       setDeleting(false);
     }
-  };
+  }, [selectedAdmin, fetchAdmins]);
 
   return (
-    <div className='h-full w-full flex-1 px-5 py-3 bg-[#EAEFF8] gap-4 flex flex-col'>
-      <Header />
+    <div className='h-full w-full flex-1 px-5 py-3 bg-[#EAEFF8] gap-4 flex flex-col' key="branch-page">
+      <Header onCreated={fetchAdmins} />
       <BranchTable
         users={admins}
         isLoading={loading}

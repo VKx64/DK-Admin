@@ -3,7 +3,7 @@ import Header from '@/components/v1/orders/Header';
 import OrderList from '@/components/v1/orders/OrderList';
 import { useState, useRef } from 'react';
 import React from 'react';
-import { pb } from '@/lib/pocketbase';
+import { useAuth } from '@/context/AuthContext';
 
 const Page = () => {
   // State for managing search query across components
@@ -12,8 +12,8 @@ const Page = () => {
   // Reference to the OrderList component for refreshing
   const orderListRef = useRef(null);
 
-  // Get the current user's role from PocketBase
-  const userRole = pb.authStore.record?.role;
+  // Get the current user from AuthContext
+  const { user } = useAuth();
 
   // Handle search changes from the header
   const handleSearch = (e) => {
@@ -44,7 +44,7 @@ const Page = () => {
         ref={orderListRef}
         searchQuery={searchQuery}
         onDataChanged={handleDataChanged}
-        userRole={userRole}
+        user={user}
       />
     </div>
   );

@@ -159,8 +159,8 @@ const ProductList = ({ searchQuery = "", onDataChanged, userRole }) => {
 
   // RENDER UI
   return (
-    <div className='w-full flex-1 flex flex-col gap-4'>
-      <div className='w-full bg-white rounded-sm shadow-sm p-4 flex flex-col gap-4 overflow-hidden'>
+    <div className='w-full h-full flex flex-col gap-4'>
+      <div className='w-full bg-white rounded-sm shadow-sm p-4 flex flex-col gap-4 flex-1 overflow-hidden'>
         {/* Filter component for search, sorting and filtering */}
         <Filters
           searchQuery={searchQuery}

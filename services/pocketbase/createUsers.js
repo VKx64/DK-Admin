@@ -1,5 +1,5 @@
-// Import the PocketBase client from our lib folder
-import { pb } from "../../lib/pocketbase";
+// Import the PocketBase client from services folder
+import pb from "../pocketbase";
 
 // FUNCTION TO CREATE A NEW USER
 export async function createUser(userData) {

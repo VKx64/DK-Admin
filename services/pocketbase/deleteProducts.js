@@ -1,5 +1,5 @@
-// Import the PocketBase client from our lib folder
-import { pb } from "../../lib/pocketbase";
+// Import the PocketBase client from services folder
+import pb from "../pocketbase";
 
 // 1. FUNCTION TO DELETE A PRODUCT AND ITS RELATED DATA
 // This function removes a product and all its related records from other collections

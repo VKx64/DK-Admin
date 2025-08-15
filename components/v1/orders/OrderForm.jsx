@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { createOrder } from "@/services/pocketbase/createOrders";
 import { getProductsWithAllData } from "@/services/pocketbase/readProducts";
-import { pb } from "@/lib/pocketbase";
+import pb from "@/services/pocketbase";
 
 /**
  * OrderForm - A form component for creating new orders

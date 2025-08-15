@@ -1,5 +1,5 @@
-// Import the PocketBase client from our lib folder
-import { pb } from "../../lib/pocketbase";
+// Import the PocketBase client from services folder
+import pb from "../pocketbase";
 
 // 1. FUNCTION TO CREATE A NEW PRODUCT WITH BASIC INFO
 // This creates just the main product record
