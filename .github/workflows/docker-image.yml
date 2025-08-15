@@ -35,3 +35,7 @@ jobs:
           tags: |
             ghcr.io/${{ steps.string.outputs.repo_name }}:latest
             ghcr.io/${{ steps.string.outputs.repo_name }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_POCKETBASE_URL=${{ secrets.NEXT_PUBLIC_POCKETBASE_URL }}
+            NEXT_PUBLIC_SHOP_LATITUDE=${{ secrets.NEXT_PUBLIC_SHOP_LATITUDE }}
+            NEXT_PUBLIC_SHOP_LONGITUDE=${{ secrets.NEXT_PUBLIC_SHOP_LONGITUDE }}
