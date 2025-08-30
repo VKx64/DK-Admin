@@ -33,7 +33,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
+import { format } from "date-fns";
 
 const InventoryAnalytics = ({
   products = [],
@@ -46,6 +48,7 @@ const InventoryAnalytics = ({
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [inventoryView, setInventoryView] = useState("products"); // products or parts
+  const [showReports, setShowReports] = useState(false);
 
   // Process inventory data
   const inventoryData = useMemo(() => {
@@ -81,6 +84,8 @@ const InventoryAnalytics = ({
           currentStock: stockQuantity,
           stockStatus,
           riskLevel,
+          created: stockRecord?.created || product.created,
+          updated: stockRecord?.updated || product.updated,
           type: 'product'
         };
       });
@@ -114,6 +119,8 @@ const InventoryAnalytics = ({
           reorderThreshold,
           stockStatus,
           riskLevel,
+          created: part.created,
+          updated: part.updated,
           type: 'part'
         };
       });
@@ -121,7 +128,7 @@ const InventoryAnalytics = ({
 
     // Apply filters
     return items.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (item.brand && item.brand.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = selectedCategory === "all" ||
                              (item.category && item.category === selectedCategory) ||
@@ -131,7 +138,226 @@ const InventoryAnalytics = ({
     });
   }, [products, productStocks, parts, inventoryView, searchTerm, selectedCategory]);
 
-  // Stock status distribution
+  // Historical stock movements analysis
+  const stockMovementAnalysis = useMemo(() => {
+    if (inventoryView !== "parts" || !partStockLogs.length) {
+      return { dailyMovements: [], topChanges: [], totalMovements: 0 };
+    }
+
+    // Group by date for daily movements chart
+    const dailyMovements = partStockLogs.reduce((acc, log) => {
+      const date = format(new Date(log.created), 'yyyy-MM-dd');
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          usage: 0,
+          replenishment: 0,
+          adjustments: 0,
+          total: 0
+        };
+      }
+
+      const change = log.change_quantity || 0;
+      const type = log.type?.toLowerCase() || 'other';
+
+      if (type === 'usage' && change < 0) {
+        acc[date].usage += Math.abs(change);
+      } else if (type === 'replenishment' && change > 0) {
+        acc[date].replenishment += change;
+      } else if (['manual adjustment', 'correction'].includes(type)) {
+        acc[date].adjustments += Math.abs(change);
+      }
+
+      acc[date].total += Math.abs(change);
+      return acc;
+    }, {});
+
+    // Convert to array and sort by date
+    const dailyMovementsArray = Object.values(dailyMovements)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Find parts with most stock changes
+    const partChanges = partStockLogs.reduce((acc, log) => {
+      const partId = log.part;
+      if (!acc[partId]) {
+        const part = parts.find(p => p.id === partId);
+        acc[partId] = {
+          partName: part?.name || `Part ${partId}`,
+          totalChanges: 0,
+          movements: 0
+        };
+      }
+      acc[partId].totalChanges += Math.abs(log.change_quantity || 0);
+      acc[partId].movements += 1;
+      return acc;
+    }, {});
+
+    const topChanges = Object.values(partChanges)
+      .sort((a, b) => b.totalChanges - a.totalChanges)
+      .slice(0, 10);
+
+    return {
+      dailyMovements: dailyMovementsArray,
+      topChanges,
+      totalMovements: partStockLogs.length
+    };
+  }, [partStockLogs, parts, inventoryView]);
+
+  // Generate detailed report
+  const generateReport = () => {
+    const reportData = {
+      inventoryType: inventoryView,
+      totalItems: inventoryData.length,
+      stockSummary: {
+        outOfStock: inventoryData.filter(item => item.stockStatus === 'Out of Stock').length,
+        lowStock: inventoryData.filter(item => item.stockStatus === 'Low Stock').length,
+        normal: inventoryData.filter(item => item.stockStatus === 'Normal').length,
+        overstocked: inventoryData.filter(item => item.stockStatus === 'Overstocked').length,
+      },
+      criticalItems: inventoryData.filter(item => item.riskLevel === 'Critical' || item.riskLevel === 'High'),
+      stockMovements: stockMovementAnalysis,
+      generatedAt: new Date().toISOString(),
+      filters: {
+        branch: selectedBranch,
+        category: selectedCategory,
+        searchTerm
+      }
+    };
+
+    // Open report in new tab/window
+    const reportWindow = window.open('', '_blank');
+    reportWindow.document.write(generateReportHTML(reportData));
+    reportWindow.document.close();
+  };
+
+  // Generate HTML report
+  const generateReportHTML = (data) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Inventory Analytics Report - ${data.period}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+          .section { margin-bottom: 30px; }
+          .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+          .stat-card { border: 1px solid #ddd; padding: 15px; text-align: center; border-radius: 8px; }
+          .stat-value { font-size: 2em; font-weight: bold; }
+          .critical { color: #dc2626; }
+          .warning { color: #f59e0b; }
+          .success { color: #10b981; }
+          .info { color: #3b82f6; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f5f5f5; }
+          .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 0.8em; }
+          .badge-critical { background-color: #dc2626; }
+          .badge-high { background-color: #f59e0b; }
+          .badge-normal { background-color: #10b981; }
+          @media print { body { margin: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Inventory Analytics Report</h1>
+          <h2>${data.inventoryType.charAt(0).toUpperCase() + data.inventoryType.slice(1)} Inventory</h2>
+          <p><strong>Generated:</strong> ${format(new Date(data.generatedAt), 'PPpp')}</p>
+        </div>
+
+        <div class="section">
+          <h3>Executive Summary</h3>
+          <div class="summary-grid">
+            <div class="stat-card">
+              <div class="stat-value">${data.totalItems}</div>
+              <div>Total Items</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value critical">${data.stockSummary.outOfStock}</div>
+              <div>Out of Stock</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value warning">${data.stockSummary.lowStock}</div>
+              <div>Low Stock</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value info">${data.stockSummary.overstocked}</div>
+              <div>Overstocked</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Critical Items Requiring Attention</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Brand</th>
+                <th>Current Stock</th>
+                <th>Status</th>
+                <th>Risk Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.criticalItems.map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.brand || 'N/A'}</td>
+                  <td>${item.currentStock}</td>
+                  <td><span class="badge ${item.stockStatus === 'Out of Stock' ? 'badge-critical' : 'badge-high'}">${item.stockStatus}</span></td>
+                  <td><span class="badge ${item.riskLevel === 'Critical' ? 'badge-critical' : 'badge-high'}">${item.riskLevel}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        ${data.inventoryType === 'parts' && data.stockMovements.totalMovements > 0 ? `
+        <div class="section">
+          <h3>Stock Movement Analysis</h3>
+          <p><strong>Total Movements:</strong> ${data.stockMovements.totalMovements}</p>
+
+          <h4>Top Parts by Activity</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Part Name</th>
+                <th>Total Changes</th>
+                <th>Number of Movements</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.stockMovements.topChanges.map(part => `
+                <tr>
+                  <td>${part.partName}</td>
+                  <td>${part.totalChanges}</td>
+                  <td>${part.movements}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        ` : ''}
+
+        <div class="section">
+          <h3>Applied Filters</h3>
+          <ul>
+            <li><strong>Branch:</strong> ${data.filters.branch === 'all' ? 'All Branches' : data.filters.branch}</li>
+            <li><strong>Category:</strong> ${data.filters.category === 'all' ? 'All Categories' : data.filters.category}</li>
+            <li><strong>Search Term:</strong> ${data.filters.searchTerm || 'None'}</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <p style="text-align: center; color: #666; font-size: 0.9em;">
+            This report was generated automatically by the DK-Admin Inventory Analytics System
+          </p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
   const stockStatusData = useMemo(() => {
     const distribution = {
       'Out of Stock': 0,
@@ -209,13 +435,33 @@ const InventoryAnalytics = ({
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Icon icon="mdi:warehouse" width="24" height="24" className="text-blue-600" />
-          <h2 className="text-2xl font-bold">Inventory Analytics</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div>
+            <Input
+              placeholder="Search by name or brand..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-64"
+            />
+          </div>
+
+          <div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <Select value={inventoryView} onValueChange={setInventoryView}>
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -225,40 +471,9 @@ const InventoryAnalytics = ({
               <SelectItem value="parts">Parts</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Search</label>
-          <Input
-            placeholder="Search items..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Category/Brand</label>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Branch</label>
           <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-            <SelectTrigger>
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="All branches" />
             </SelectTrigger>
             <SelectContent>
@@ -268,6 +483,16 @@ const InventoryAnalytics = ({
               ))}
             </SelectContent>
           </Select>
+
+          <Button
+            onClick={generateReport}
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Icon icon="mdi:file-document-outline" className="h-4 w-4" />
+            Generate Report
+          </Button>
         </div>
       </div>
 
@@ -379,12 +604,47 @@ const InventoryAnalytics = ({
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">No critical stock items</p>
+                <p className="text-gray-500 text-center py-4">No critical stock items found</p>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Stock Movement Analysis (Parts only) */}
+      {inventoryView === "parts" && stockMovementAnalysis.dailyMovements.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Icon icon="mdi:chart-line" width="20" height="20" />
+              Stock Movement Trends
+              <Badge variant="outline" className="ml-2">
+                {stockMovementAnalysis.totalMovements} total movements
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stockMovementAnalysis.dailyMovements} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                />
+                <YAxis />
+                <Tooltip
+                  labelFormatter={(value) => format(new Date(value), 'MMM dd, yyyy')}
+                  formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
+                />
+                <Legend />
+                <Bar dataKey="usage" stackId="a" fill="#dc2626" name="Usage" />
+                <Bar dataKey="replenishment" stackId="a" fill="#10b981" name="Replenishment" />
+                <Bar dataKey="adjustments" stackId="a" fill="#f59e0b" name="Adjustments" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stock Levels Bar Chart */}
       <Card>
@@ -459,7 +719,7 @@ const InventoryAnalytics = ({
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>{item.brand || 'N/A'}</TableCell>
                     <TableCell>
-                      {inventoryView === 'products' ? item.model : item.partNumber}
+                      {inventoryView === 'products' ? (item.model || 'N/A') : (item.partNumber || 'N/A')}
                     </TableCell>
                     <TableCell className="text-right font-mono">
                       {item.currentStock}
@@ -497,7 +757,15 @@ const InventoryAnalytics = ({
 
             {inventoryData.length > 50 && (
               <div className="text-center py-4 text-sm text-gray-500">
-                Showing first 50 items. Use filters to narrow down results.
+                Showing first 50 items of {inventoryData.length} total items. Use filters to narrow down results.
+              </div>
+            )}
+
+            {inventoryData.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <Icon icon="mdi:database-search" className="mx-auto h-12 w-12 mb-4" />
+                <p>No inventory items found matching the current filters.</p>
+                <p className="text-sm mt-2">Try adjusting the filters to see more results.</p>
               </div>
             )}
           </div>
