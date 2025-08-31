@@ -212,9 +212,9 @@ const NewBranchDetails = ({ open, onOpenChange, onCreated }) => {
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="" disabled>
-                        <span className="text-gray-500">No available admin users</span>
-                      </SelectItem>
+                      <div className="px-2 py-1.5 text-sm text-gray-500">
+                        No available admin users
+                      </div>
                     )}
                   </SelectContent>
                 </Select>

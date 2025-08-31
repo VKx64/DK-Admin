@@ -10,10 +10,10 @@ Welcome to the Electronics E-commerce Admin Dashboard — a comprehensive web-ba
 This Admin Dashboard is a role-based management system built with Next.js. It integrates with PocketBase for backend data management and authentication, and provides a responsive, intuitive UI for all user roles.
 
 ### 👤 User Roles
-	- 🏆 **Super Admin**: Full access to all branches, users, and system-wide analytics.
-	- 🏢 **Admin**: Manages a specific branch, including products, parts, orders, customers, and technicians within their branch.
-	- 🛠️ **Technician**: Manages their own profile, views assigned service requests, and updates job status.
-	- 🛒 **Customer**: (If enabled) Can place orders and view their own order history.
+- 🏆 **Super Admin**: Full access to all branches, users, and system-wide analytics.
+- 🏢 **Admin**: Manages a specific branch, including products, parts, orders, customers, and technicians within their branch.
+- 🛠️ **Technician**: Manages their own profile, views assigned service requests, and updates job status.
+- 🛒 **Customer**: (If enabled) Can place orders and view their own order history.
 
 ## ✨ Key Features
 
