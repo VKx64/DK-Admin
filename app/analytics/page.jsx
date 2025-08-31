@@ -17,6 +17,7 @@ import BestSellingProductService from "@/components/v1/analytics/BestSellingProd
 import RevenueByStock from "@/components/v1/analytics/RevenueByStock";
 import InventoryForecast from "@/components/v1/analytics/InventoryForecast";
 import InventoryAnalytics from "@/components/v1/analytics/InventoryAnalytics";
+import SalesAnalytics from "@/components/v1/analytics/SalesAnalytics";
 
 // Define PIE_COLORS for Pie Charts, to be passed to relevant card components
 const PIE_COLORS = [
@@ -363,6 +364,16 @@ const AnalyticsPage = () => {
                   Overview
                 </button>
                 <button
+                  onClick={() => setSelectedView("sales")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    selectedView === "sales"
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Sales
+                </button>
+                <button
                   onClick={() => setSelectedView("inventory")}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     selectedView === "inventory"
@@ -451,6 +462,17 @@ const AnalyticsPage = () => {
               <InventoryForecast data={inventoryForecastData} />
             </div>
           </>
+        )}
+
+        {/* Sales View */}
+        {selectedView === "sales" && (
+          <SalesAnalytics
+            orders={orders}
+            products={products}
+            productPricings={productPricings}
+            branches={branches}
+            users={userRegistrations}
+          />
         )}
 
         {/* Inventory View */}

@@ -1,9 +1,7 @@
 services:
   app:
-    # Use the official Node.js Long-Term Support image.
     image: node:lts
+    network_mode: host
     volumes:
-      # Mount your current project directory into the container.
       - .:/workspaces:cached
-    # A command to keep the container alive so we can connect to it.
     command: sleep infinity

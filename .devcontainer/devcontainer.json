@@ -5,8 +5,6 @@
   // Tells VS Code to attach to the service we named 'app' in the blueprint.
   "service": "app",
   "workspaceFolder": "/workspaces/",
-  // Forward the Next.js port (3000) from the container to your local machine.
-  "forwardPorts": [3000],
   // After creating the container, automatically run 'npm install' inside it.
   "postCreateCommand": "npm install --legacy-peer-deps",
   "remoteUser": "node"
