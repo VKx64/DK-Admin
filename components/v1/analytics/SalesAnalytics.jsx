@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   BarChart,
   Bar,
@@ -38,7 +39,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Icon } from "@iconify/react";
-import { format, parseISO, startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
+import { format, parseISO, startOfDay, endOfDay, subDays, isWithinInterval, startOfQuarter, endOfQuarter, subQuarters } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const PIE_COLORS = [
@@ -59,11 +60,32 @@ const SalesAnalytics = ({
   branches = [],
   users = []
 }) => {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedTimeRange, setSelectedTimeRange] = useState("today");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter branches based on user role and set default branch for admin users
+  const availableBranches = useMemo(() => {
+    if (user?.role === "admin" && user?.branch_details) {
+      // Admin users can only see their managed branch
+      return branches.filter(branch => branch.id === user.branch_details);
+    } else if (user?.role === "super-admin") {
+      // Super-admin can see all branches
+      return branches;
+    }
+    // Default case (fallback)
+    return branches;
+  }, [branches, user?.role, user?.branch_details]);
+
+  // Set initial branch selection for admin users
+  useEffect(() => {
+    if (user?.role === "admin" && user?.branch_details && selectedBranch === "all") {
+      setSelectedBranch(user.branch_details);
+    }
+  }, [user?.role, user?.branch_details, selectedBranch]);
 
   // Get date range based on selection
   const dateRange = useMemo(() => {
@@ -90,6 +112,17 @@ const SalesAnalytics = ({
           start: startOfDay(subDays(today, 30)),
           end: endOfDay(today),
         };
+      case "thisquarter":
+        return {
+          start: startOfQuarter(today),
+          end: endOfDay(today),
+        };
+      case "lastquarter":
+        const lastQuarter = subQuarters(today, 1);
+        return {
+          start: startOfQuarter(lastQuarter),
+          end: endOfQuarter(lastQuarter),
+        };
       case "custom":
         return {
           start: startOfDay(selectedDate),
@@ -111,6 +144,13 @@ const SalesAnalytics = ({
       const matchesBranch = selectedBranch === "all" || order.branch === selectedBranch;
       const matchesStatus = selectedStatus === "all" || order.status === selectedStatus;
 
+      // Role-based branch filtering: Admin users can only see orders from their managed branch
+      let matchesUserBranch = true;
+      if (user?.role === "admin" && user?.branch_details) {
+        matchesUserBranch = order.branch === user.branch_details;
+      }
+      // Super-admin can see all orders (no additional filtering needed)
+
       // Search functionality - search in user details or product names
       let matchesSearch = true;
       if (searchTerm.trim()) {
@@ -127,9 +167,9 @@ const SalesAnalytics = ({
                        orderProductNames.toLowerCase().includes(searchLower);
       }
 
-      return withinDateRange && matchesBranch && matchesStatus && matchesSearch;
+      return withinDateRange && matchesBranch && matchesStatus && matchesUserBranch && matchesSearch;
     });
-  }, [orders, dateRange, selectedBranch, selectedStatus, searchTerm, users, products]);
+  }, [orders, dateRange, selectedBranch, selectedStatus, searchTerm, users, products, user?.role, user?.branch_details]);
 
   // Sales analytics calculations
   const salesData = useMemo(() => {
@@ -319,6 +359,8 @@ const SalesAnalytics = ({
               <SelectItem value="yesterday">Yesterday</SelectItem>
               <SelectItem value="last7days">Last 7 Days</SelectItem>
               <SelectItem value="last30days">Last 30 Days</SelectItem>
+              <SelectItem value="thisquarter">This Quarter</SelectItem>
+              <SelectItem value="lastquarter">Last Quarter</SelectItem>
               <SelectItem value="custom">Custom Date</SelectItem>
             </SelectContent>
           </Select>
@@ -348,14 +390,22 @@ const SalesAnalytics = ({
             </Popover>
           )}
 
-          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-            <SelectTrigger className="w-40">
+          <Select
+            value={selectedBranch}
+            onValueChange={setSelectedBranch}
+            disabled={user?.role === "admin"} // Disable dropdown for admin users
+          >
+            <SelectTrigger className={`w-40 ${user?.role === "admin" ? "opacity-75 cursor-not-allowed" : ""}`}>
               <SelectValue placeholder="All branches" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map(branch => (
-                <SelectItem key={branch.id} value={branch.id}>{branch.branch_name || `Branch ${branch.id}`}</SelectItem>
+              {user?.role === "super-admin" && (
+                <SelectItem value="all">All Branches</SelectItem>
+              )}
+              {availableBranches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.branch_name || `Branch ${branch.id}`}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

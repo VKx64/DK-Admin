@@ -7,7 +7,9 @@ export async function getProducts(page = 1, perPage = 50) {
   try {
     console.log(`Fetching products - page: ${page}, perPage: ${perPage}`);
     // This line calls PocketBase to fetch products from the database
-    const products = await pb.collection("products").getList(page, perPage);
+    const products = await pb.collection("products").getList(page, perPage, {
+      requestKey: null
+    });
     console.log(`Retrieved ${products.items.length} products of ${products.totalItems} total`);
     console.log('Products data structure:', products);
     return products;
@@ -24,7 +26,9 @@ export async function getProductById(id) {
   try {
     console.log(`Fetching single product with ID: ${id}`);
     // This line calls PocketBase to fetch one specific product
-    const product = await pb.collection("products").getOne(id);
+    const product = await pb.collection("products").getOne(id, {
+      requestKey: null
+    });
     console.log('Retrieved product:', product);
     return product;
   } catch (error) {

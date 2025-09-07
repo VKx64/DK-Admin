@@ -13,7 +13,8 @@ export async function login(email, password) {
     // Check if authentication was successful (authData will have record)
     if (authData.record) {
       console.log("Login Successful!");
-      console.log("User ID: ", pb.authStore.record.id); // Use model instead of record after auth
+      console.log("User ID: ", pb.authStore.model.id); // Use model instead of record after auth
+      console.log("User branch_details: ", pb.authStore.model.branch_details);
       return true;
     } else {
       // This case might not be strictly necessary as authWithPassword throws on failure
@@ -35,3 +36,11 @@ export function logout() {
   console.log("User Logged Out Successfully");
   return true;
 }
+
+// Get current authenticated user from authStore
+export function getCurrentUser() {
+  return pb.authStore.model;
+}
+
+// Export pb instance for use in other services
+export { pb };

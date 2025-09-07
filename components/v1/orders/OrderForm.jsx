@@ -214,7 +214,8 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
         // Fetch customers (users with role "customer")
         const customersResult = await pb.collection("users").getFullList({
           filter: 'role = "customer"',
-          sort: "name"
+          sort: "name",
+          requestKey: null
         });
         setCustomers(customersResult);
 
@@ -239,7 +240,8 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
         try {
           const addressesResult = await pb.collection("delivery_information").getFullList({
             filter: `user = "${userValue}"`,
-            sort: "name"
+            sort: "name",
+            requestKey: null
           });
           setAddresses(addressesResult);
 
@@ -382,6 +384,8 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
             barangay_code: data.new_address.barangay,
             zip_code: data.new_address.zip_code,
             additional_notes: data.new_address.additional_notes
+          }, {
+            requestKey: null
           });
 
           addressId = newAddress.id;

@@ -7,7 +7,9 @@ export async function deleteOrder(id) {
     console.log(`Deleting order with ID: ${id}`);
 
     // Delete the order by its ID
-    await pb.collection("user_order").delete(id);
+    await pb.collection("user_order").delete(id, {
+      requestKey: null
+    });
 
     console.log('================================================================================================');
     console.log(`Order ${id} deleted successfully`);
@@ -39,7 +41,9 @@ export async function deleteManyOrders(orderIds) {
     // Process each order deletion
     for (const id of orderIds) {
       try {
-        await pb.collection("user_order").delete(id);
+        await pb.collection("user_order").delete(id, {
+          requestKey: null
+        });
         results.successCount++;
       } catch (error) {
         console.error(`Error deleting order ${id}:`, error);
@@ -71,7 +75,8 @@ export async function clearUserCart(userId) {
 
     // Get all cart items for this user
     const cartItems = await pb.collection("user_cart").getFullList({
-      filter: `user="${userId}"`
+      filter: `user="${userId}"`,
+      requestKey: null
     });
 
     if (cartItems.length === 0) {
@@ -82,7 +87,9 @@ export async function clearUserCart(userId) {
     // Delete each cart item
     let deletedCount = 0;
     for (const item of cartItems) {
-      await pb.collection("user_cart").delete(item.id);
+      await pb.collection("user_cart").delete(item.id, {
+        requestKey: null
+      });
       deletedCount++;
     }
 

@@ -51,17 +51,22 @@ export async function getOrdersByRole(user) {
       });
     } else if (userRole === 'admin') {
       // Admin can only see orders from their assigned branch
-      if (!user.branch_details) {
+      // Get the authenticated user's branch details from authStore
+      const authUser = pb.authStore.model;
+
+      if (!authUser || !authUser.branch_details) {
         console.warn("Admin user has no branch_details assigned");
         return [];
       }
 
       // Fetch orders filtered by the admin's branch
       result = await pb.collection("user_order").getFullList({
-        filter: `branch = "${user.branch_details}"`,
+        filter: `branch = "${authUser.branch_details}"`,
         expand: 'user,address,branch',
         requestKey: null
       });
+
+      console.log(`Admin filtering orders by branch: ${authUser.branch_details}`);
     } else {
       // Other roles (customer, technician) can only see their own orders
       result = await pb.collection("user_order").getFullList({
@@ -84,7 +89,7 @@ export async function getOrdersByRole(user) {
       console.log('First order expanded address:', firstOrder.expand?.address);
       console.log('First order expanded branch:', firstOrder.expand?.branch);
       console.log('User role:', userRole);
-      console.log('User branch_details:', user.branch_details);
+      console.log('AuthStore user branch_details:', pb.authStore.model?.branch_details);
       console.log('================================================================================================');
     }
 

@@ -709,7 +709,6 @@ const InventoryAnalytics = ({
                   )}
                   <TableHead className="text-right">Current Stock</TableHead>
                   {inventoryView === 'parts' && <TableHead className="text-right">Reorder Point</TableHead>}
-                  <TableHead>Status</TableHead>
                   <TableHead>Risk Level</TableHead>
                 </TableRow>
               </TableHeader>
@@ -729,17 +728,6 @@ const InventoryAnalytics = ({
                         {item.reorderThreshold}
                       </TableCell>
                     )}
-                    <TableCell>
-                      <Badge
-                        variant={
-                          item.stockStatus === 'Out of Stock' ? 'destructive' :
-                          item.stockStatus === 'Low Stock' ? 'secondary' :
-                          item.stockStatus === 'Overstocked' ? 'outline' : 'default'
-                        }
-                      >
-                        {item.stockStatus}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={

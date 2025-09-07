@@ -14,10 +14,42 @@ export function AuthProvider({ children }) {
   // Initialize PocketBase and set up user state
   useEffect(() => {
     if (pb) {
+      // Set initial user from authStore
       setUser(pb.authStore.model);
-      const unsubscribe = pb.authStore.onChange((token, model) => {
-        setUser(model);
+
+      // Set up auth store listener
+      const unsubscribe = pb.authStore.onChange(async (token, model) => {
+        if (model) {
+          try {
+            // Fetch the user with expanded branch_details and technician_details
+            const expandedUser = await pb.collection("users").getOne(model.id, {
+              expand: 'branch_details,technician_details'
+            });
+            setUser(expandedUser);
+          } catch (error) {
+            console.error("Error fetching expanded user data:", error);
+            setUser(model); // Fallback to the basic model
+          }
+        } else {
+          setUser(model);
+        }
       });
+
+      // If there's an existing user, fetch expanded data
+      if (pb.authStore.model) {
+        (async () => {
+          try {
+            const expandedUser = await pb.collection("users").getOne(pb.authStore.model.id, {
+              expand: 'branch_details,technician_details'
+            });
+            setUser(expandedUser);
+          } catch (error) {
+            console.error("Error fetching initial expanded user data:", error);
+            setUser(pb.authStore.model); // Fallback to the basic model
+          }
+        })();
+      }
+
       return () => unsubscribe();
     } else {
       console.warn("AuthProvider: pb instance is null.");
@@ -32,8 +64,20 @@ export function AuthProvider({ children }) {
       const authData = await pb
         .collection("users")
         .authWithPassword(email, password);
-      redirectUser(authData.record?.role);
-      return authData.record;
+
+      // Fetch the user with expanded branch_details and technician_details
+      try {
+        const expandedUser = await pb.collection("users").getOne(authData.record.id, {
+          expand: 'branch_details,technician_details'
+        });
+        setUser(expandedUser);
+        redirectUser(expandedUser.role);
+        return expandedUser;
+      } catch (error) {
+        console.error("Error fetching expanded user data after login:", error);
+        redirectUser(authData.record?.role);
+        return authData.record;
+      }
     } catch (error) {
       console.error("Login failed:", error);
       alert("Login failed. Check credentials.");

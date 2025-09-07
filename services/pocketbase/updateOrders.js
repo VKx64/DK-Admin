@@ -7,7 +7,9 @@ export async function updateOrder(id, orderData) {
     console.log(`Updating order ${id} with data:`, orderData);
 
     // Update the order with the new data
-    const updatedOrder = await pb.collection("user_order").update(id, orderData);
+    const updatedOrder = await pb.collection("user_order").update(id, orderData, {
+      requestKey: null
+    });
 
     console.log('================================================================================================');
     console.log('Updated order:', updatedOrder);
@@ -45,6 +47,8 @@ export async function updateOrderStatus(orderId, newStatus) {
     // Update the order status
     const updatedOrder = await pb.collection("user_order").update(orderId, {
       status: newStatus
+    }, {
+      requestKey: null
     });
 
     console.log('================================================================================================');
@@ -93,7 +97,9 @@ export async function updateBatchOrdersStatus(orderIds, newStatus) {
     // Process each order update
     for (const id of orderIds) {
       try {
-        await pb.collection("user_order").update(id, { status: newStatus });
+        await pb.collection("user_order").update(id, { status: newStatus }, {
+          requestKey: null
+        });
         results.successCount++;
       } catch (error) {
         console.error(`Error updating order ${id}:`, error);

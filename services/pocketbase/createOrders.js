@@ -7,7 +7,9 @@ export async function createOrder(orderData) {
     console.log('Creating order with data:', orderData);
 
     // Create the order record
-    const newOrder = await pb.collection("user_order").create(orderData);
+    const newOrder = await pb.collection("user_order").create(orderData, {
+      requestKey: null
+    });
 
     // Log the created order for debugging
     console.log('================================================================================================');
@@ -31,7 +33,8 @@ export async function createOrderFromCart(userId, addressId, paymentMode, delive
     // Get cart items for this user
     const cartItems = await pb.collection("user_cart").getFullList({
       filter: `user="${userId}"`,
-      expand: "product"
+      expand: "product",
+      requestKey: null
     });
 
     if (!cartItems || cartItems.length === 0) {
@@ -52,11 +55,15 @@ export async function createOrderFromCart(userId, addressId, paymentMode, delive
     };
 
     // Create the order record
-    const newOrder = await pb.collection("user_order").create(orderData);
+    const newOrder = await pb.collection("user_order").create(orderData, {
+      requestKey: null
+    });
 
     // Clear the cart
     for (const item of cartItems) {
-      await pb.collection("user_cart").delete(item.id);
+      await pb.collection("user_cart").delete(item.id, {
+        requestKey: null
+      });
     }
 
     // Log the created order

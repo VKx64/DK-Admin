@@ -2,13 +2,10 @@
 import React, { useState, useMemo, useEffect } from "react";
 import pb from "@/services/pocketbase";
 import { Icon } from "@iconify/react";
+import { useAuth } from "@/context/AuthContext";
 
 import StatCard from "@/components/v1/analytics/StatCard";
-import PaymentMethodsCard from "@/components/v1/analytics/PaymentMethodsCard";
-import TopBrandsCard from "@/components/v1/analytics/TopBrandsCard";
-import UserRegistrationsTrendCard from "@/components/v1/analytics/UserRegistrationsTrendCard";
 import ServiceRequestsTrendCard from "@/components/v1/analytics/ServiceRequestsTrendCard";
-import RevenueTrendCard from "@/components/v1/analytics/RevenueTrendCards";
 import UserRolesCard from "@/components/v1/analytics/UserRolesCard";
 import ServiceRequestStatusCard from "@/components/v1/analytics/ServiceRequestStatusCard";
 import TopProductsByStockCard from "@/components/v1/analytics/TopProductsByStockCard";
@@ -32,6 +29,7 @@ const PIE_COLORS = [
 ];
 
 const AnalyticsPage = () => {
+  const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState("last30days");
   const [selectedView, setSelectedView] = useState("overview");
   const [userRegistrations, setUserRegistrations] = useState([]);
@@ -379,7 +377,8 @@ const AnalyticsPage = () => {
                     selectedView === "inventory"
                       ? "bg-blue-500 text-white"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  } ${user?.role === "admin" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  disabled={user?.role === "admin"}
                 >
                   Inventory
                 </button>
@@ -402,7 +401,7 @@ const AnalyticsPage = () => {
         {selectedView === "overview" && (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <StatCard
                 title="Total Users"
                 value={kpiData.totalUsers}
@@ -416,12 +415,6 @@ const AnalyticsPage = () => {
                 color="#10b981"
               />
               <StatCard
-                title="Total Revenue (from period)"
-                value={`₱${kpiData.monthlyRevenue.toLocaleString()}`}
-                icon={<Icon icon="mdi:currency-usd" width="32" height="32" />}
-                color="#8b5cf6"
-              />
-              <StatCard
                 title="Total Parts in Stock"
                 value={kpiData.totalPartsStock.toLocaleString()}
                 icon={<Icon icon="mdi:package-variant" width="32" height="32" />}
@@ -430,10 +423,8 @@ const AnalyticsPage = () => {
             </div>
 
             {/* Charts Section - Row 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <UserRegistrationsTrendCard data={registrationTrends} />
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
               <ServiceRequestsTrendCard data={serviceRequestTrends} />
-              <RevenueTrendCard data={revenueTrends} />
             </div>
 
             {/* Charts Section - Row 2 */}
@@ -446,13 +437,7 @@ const AnalyticsPage = () => {
               <TopProductsByStockCard data={topProductsByStock} />
             </div>
 
-            {/* Additional Insights Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <PaymentMethodsCard data={paymentMethods} PIE_COLORS={PIE_COLORS} />
-              <TopBrandsCard data={topBrands} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div className="grid grid-cols-1 gap-6 mt-6">
               <BestSellingProductService data={bestSellingCombos} />
               <RevenueByStock data={revenueByStockData} />
             </div>
@@ -476,7 +461,7 @@ const AnalyticsPage = () => {
         )}
 
         {/* Inventory View */}
-        {selectedView === "inventory" && (
+        {selectedView === "inventory" && user?.role !== "admin" && (
           <InventoryAnalytics
             products={products}
             productStocks={productStocks}
@@ -484,6 +469,24 @@ const AnalyticsPage = () => {
             parts={parts}
             partStockLogs={partStockLogs}
           />
+        )}
+
+        {/* Access Denied for Admin Users */}
+        {selectedView === "inventory" && user?.role === "admin" && (
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <Icon
+                icon="mdi:block-helper"
+                className="mx-auto text-6xl text-gray-400 mb-4"
+              />
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                Access Restricted
+              </h3>
+              <p className="text-gray-600">
+                Admin users do not have access to inventory analytics.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Services View */}
