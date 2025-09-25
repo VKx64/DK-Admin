@@ -5,7 +5,7 @@ import DataTable from './DataTable'
 import { Button } from '@/components/ui/button'
 import { getProductsWithAllData } from '@/services/pocketbase/readProducts'
 
-const ProductList = ({ searchQuery = "", onDataChanged, userRole }) => {
+const ProductList = ({ searchQuery = "", onDataChanged, onSearchChange, userRole }) => {
   // State for product data
   const [productData, setProductData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -164,7 +164,14 @@ const ProductList = ({ searchQuery = "", onDataChanged, userRole }) => {
         {/* Filter component for search, sorting and filtering */}
         <Filters
           searchQuery={searchQuery}
-          onSearchChange={() => {}} // This is now handled by the parent
+          onSearchChange={(e) => {
+            // Reset to first page when searching
+            setPage(1);
+            // Pass search change up to parent component
+            if (onSearchChange) {
+              onSearchChange(e);
+            }
+          }}
           onPriceSortChange={(value) => {
             setPriceSort(value);
             // Clear other sorts to avoid conflicts

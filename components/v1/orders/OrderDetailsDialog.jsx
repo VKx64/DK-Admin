@@ -162,9 +162,9 @@ const OrderDetailsDialog = ({
 
   // Format currency for display
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PH', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PHP'
     }).format(amount || 0);
   };
 

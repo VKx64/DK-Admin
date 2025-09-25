@@ -1,13 +1,12 @@
 "use client";
 import { Icon } from "@iconify/react";
 import React, { useState } from "react";
-import SearchBar from "../SearchBar";
 import { Button } from "@/components/ui/button";
 import ProductForm from "./ProductForm";
 import { RefreshCw } from "lucide-react"; // Import the Lucide React refresh icon
 import { canManageProducts } from "@/utils/roleUtils";
 
-const Header = ({ onSearchChange, onProductAdded, onRefresh, userRole }) => {
+const Header = ({ onProductAdded, onRefresh, userRole }) => {
   // State to control the product form dialog
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   // State to handle refresh button loading state
@@ -42,8 +41,8 @@ const Header = ({ onSearchChange, onProductAdded, onRefresh, userRole }) => {
           </h1>
         </div>
 
-        {/* Search bar and Buttons */}
-        <div className="flex flex-row gap-3">
+        {/* Buttons */}
+        <div className="flex flex-row gap-3 items-center">
           <Button
             size={"lg"}
             variant={"outline"}

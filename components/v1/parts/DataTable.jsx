@@ -112,7 +112,10 @@ const DataTable = ({ data, isLoading, error, onRefresh }) => { // Added onRefres
       cell: ({ row }) => {
         // Format the price value
         const price = row.getValue("price");
-        const formatted = price ? `$${price}` : "-";
+        const formatted = price ? new Intl.NumberFormat("en-PH", {
+          style: "currency",
+          currency: "PHP",
+        }).format(price) : "-";
         return <div className="text-right font-medium">{formatted}</div>;
       },
       size: 80,

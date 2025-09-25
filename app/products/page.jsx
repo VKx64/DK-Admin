@@ -28,7 +28,6 @@ const ProductsPage = () => {
     <div className='h-full w-full px-5 py-3 bg-[#EAEFF8] gap-4 flex flex-col overflow-hidden'>
       {/* Header with Add Product button */}
       <Header
-        onSearchChange={handleSearchChange}
         onProductAdded={handleDataChanged}
         onRefresh={handleDataChanged}
         userRole={userRole}
@@ -38,6 +37,7 @@ const ProductsPage = () => {
       <div className='flex-1 overflow-auto'>
         <ProductList
           searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
           onDataChanged={handleDataChanged}
           userRole={userRole}
         />

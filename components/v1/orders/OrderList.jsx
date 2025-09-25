@@ -4,7 +4,7 @@ import Filters from './Filters';
 import DataTable from './DataTable';
 import OrderDetailsDialog from './OrderDetailsDialog';
 import { Button } from '@/components/ui/button';
-import { getAllOrders, getOrdersByRole } from '@/services/pocketbase/readOrders';
+import { getOrdersByRole } from '@/services/pocketbase/readOrders';
 import { getProductWithAllData } from '@/services/pocketbase/readProducts';
 
 const OrderList = forwardRef(({ searchQuery = "", onDataChanged, user }, ref) => {
@@ -44,11 +44,14 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, user }, ref) =>
     const fetchOrders = async () => {
       setIsLoading(true);
       try {
-        // Use role-based filtering if user is available
-        const allOrders = user
-          ? await getOrdersByRole(user)
-          : await getAllOrders();
+        // Always use role-based filtering - if no user, return empty array
+        if (!user) {
+          console.warn("No authenticated user found, cannot fetch orders");
+          setOrderData([]);
+          return;
+        }
 
+        const allOrders = await getOrdersByRole(user);
         setOrderData(allOrders);
 
         // Apply filters and pagination

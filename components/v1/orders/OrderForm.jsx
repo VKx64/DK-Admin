@@ -834,7 +834,12 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
                         </p>
                       </div>
                       <div className="text-right mr-3">
-                        <p className="font-medium">${product.pricing?.final_price || 0}</p>
+                        <p className="font-medium">
+                          {new Intl.NumberFormat("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          }).format(product.pricing?.final_price || 0)}
+                        </p>
                         {product.pricing?.discount > 0 && (
                           <p className="text-xs text-green-600">{product.pricing.discount}% off</p>
                         )}

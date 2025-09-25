@@ -20,7 +20,10 @@ const ViewParts = ({ isOpen, onOpenChange, part }) => {
     ? `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/${part.collectionId}/${part.id}/${part.image}`
     : "/Images/default_user.jpg";
 
-  const formattedPrice = part.price ? `$${part.price}` : "N/A";
+  const formattedPrice = part.price ? new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+  }).format(part.price) : "N/A";
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

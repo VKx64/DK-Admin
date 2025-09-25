@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +13,23 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Icon } from "@iconify/react";
+import DiagnoseServiceDialog from './DiagnoseServiceDialog';
+import pb from "@/services/pocketbase";
+import { toast } from "sonner";
 
-const ViewServiceDialog = ({ isOpen, onOpenChange, service }) => {
+const ViewServiceDialog = ({ isOpen, onOpenChange, service, onServiceUpdate }) => {
+  const [isDiagnoseDialogOpen, setIsDiagnoseDialogOpen] = useState(false);
+  const [isCompletingService, setIsCompletingService] = useState(false);
+
   if (!service) return null;
 
   // Format the attachment URL if it exists
   const attachmentUrl = service.attachmentUrl || "/Images/default_user.jpg";
+
+  // Get current user info
+  const currentUser = pb.authStore?.model;
+  const isTechnician = currentUser?.role === 'technician';
+  const isAssignedTechnician = isTechnician && service.assignedTechnician === currentUser?.name;
 
   // Format status text for display
   const formatStatus = (status) => {
@@ -31,6 +42,37 @@ const ViewServiceDialog = ({ isOpen, onOpenChange, service }) => {
   const openAttachmentInNewTab = () => {
     if (service.attachmentUrl) {
       window.open(service.attachmentUrl, '_blank');
+    }
+  };
+
+  // Handle diagnosis completion
+  const handleDiagnosisComplete = () => {
+    onServiceUpdate?.(); // Refresh the service data
+  };
+
+  // Handle service completion
+  const handleCompleteService = async () => {
+    if (!isAssignedTechnician) {
+      toast.error('Only the assigned technician can complete this service');
+      return;
+    }
+
+    setIsCompletingService(true);
+    try {
+      await pb.collection('service_request').update(service.id, {
+        status: 'complete',
+        completed_by: currentUser.id,
+        completed_date: new Date().toISOString()
+      });
+
+      toast.success('Service marked as complete!');
+      onServiceUpdate?.();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error completing service:', error);
+      toast.error('Failed to complete service');
+    } finally {
+      setIsCompletingService(false);
     }
   };
 
@@ -182,10 +224,56 @@ const ViewServiceDialog = ({ isOpen, onOpenChange, service }) => {
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        <DialogFooter className="flex gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+
+          {/* Technician Actions */}
+          {isAssignedTechnician && (
+            <>
+              {service.status !== 'scheduled' && service.status !== 'complete' && (
+                <Button
+                  onClick={() => setIsDiagnoseDialogOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Icon icon="mdi:stethoscope" className="h-4 w-4 mr-2" />
+                  Diagnose
+                </Button>
+              )}
+
+              {service.status === 'scheduled' && (
+                <Button
+                  onClick={handleCompleteService}
+                  disabled={isCompletingService}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isCompletingService ? (
+                    <>
+                      <Icon icon="mdi:loading" className="h-4 w-4 mr-2 animate-spin" />
+                      Completing...
+                    </>
+                  ) : (
+                    <>
+                      <Icon icon="mdi:check-circle" className="h-4 w-4 mr-2" />
+                      Complete Service
+                    </>
+                  )}
+                </Button>
+              )}
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Diagnose Service Dialog */}
+      {/* Diagnose Service Dialog */}
+      <DiagnoseServiceDialog
+        isOpen={isDiagnoseDialogOpen}
+        onOpenChange={setIsDiagnoseDialogOpen}
+        service={service}
+        onDiagnosisComplete={handleDiagnosisComplete}
+      />
     </Dialog>
   );
 };

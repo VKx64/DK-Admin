@@ -685,6 +685,7 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, scheduledOnly = false
           isOpen={isViewDialogOpen}
           onOpenChange={setIsViewDialogOpen}
           service={selectedServiceForView}
+          onServiceUpdate={handleRefresh}
         />
       )}
     </>

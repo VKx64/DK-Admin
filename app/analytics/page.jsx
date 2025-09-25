@@ -3,6 +3,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import pb from "@/services/pocketbase";
 import { Icon } from "@iconify/react";
 import { useAuth } from "@/context/AuthContext";
+import { canViewAnalytics } from "@/utils/roleUtils";
+import { useRouter } from "next/navigation";
 
 import StatCard from "@/components/v1/analytics/StatCard";
 import ServiceRequestsTrendCard from "@/components/v1/analytics/ServiceRequestsTrendCard";
@@ -30,6 +32,40 @@ const PIE_COLORS = [
 
 const AnalyticsPage = () => {
   const { user } = useAuth();
+  const router = useRouter();
+
+  // Check if user has permission to access analytics
+  useEffect(() => {
+    if (user && !canViewAnalytics(user.role)) {
+      // Redirect technicians to their specific page, others to home
+      const redirectPath = user.role === 'technician' ? '/technitian_information' : '/';
+      router.push(redirectPath);
+      return;
+    }
+  }, [user, router]);
+
+  // Don't render anything if user doesn't have permission
+  if (user && !canViewAnalytics(user.role)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#EAEFF8]">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+          <Icon icon="mdi:shield-alert" className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
+          <p className="text-gray-600 mb-4">You don't have permission to access the analytics dashboard.</p>
+          <button
+            onClick={() => {
+              const redirectPath = user.role === 'technician' ? '/technitian_information' : '/';
+              router.push(redirectPath);
+            }}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            {user.role === 'technician' ? 'Go to Technician Dashboard' : 'Go to Dashboard'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const [selectedPeriod, setSelectedPeriod] = useState("last30days");
   const [selectedView, setSelectedView] = useState("overview");
   const [userRegistrations, setUserRegistrations] = useState([]);

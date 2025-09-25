@@ -51,6 +51,15 @@ export const canDeleteProducts = (userRole) => {
 };
 
 /**
+ * Check if a user can access analytics dashboard
+ * @param {string} userRole - The user's role
+ * @returns {boolean} - True if user can view analytics
+ */
+export const canViewAnalytics = (userRole) => {
+  return ['admin', 'super-admin'].includes(userRole);
+};
+
+/**
  * Get user-friendly role display name
  * @param {string} userRole - The user's role
  * @returns {string} - Display-friendly role name
@@ -83,4 +92,65 @@ export const getPermissionErrorMessage = (action, userRole) => {
   };
 
   return messages[action] || 'You do not have permission to perform this action.';
+};
+
+/**
+ * Check if a user can view all orders from all branches
+ * @param {string} userRole - The user's role
+ * @returns {boolean} - True if user can view all orders
+ */
+export const canViewAllOrders = (userRole) => {
+  return userRole === 'super-admin';
+};
+
+/**
+ * Check if a user should only see orders from their assigned branch
+ * @param {string} userRole - The user's role
+ * @returns {boolean} - True if user should see branch-specific orders only
+ */
+export const shouldFilterByBranch = (userRole) => {
+  return userRole === 'admin';
+};
+
+/**
+ * Get the branch IDs that a user can access
+ * @param {Object} user - The user object from PocketBase
+ * @returns {Array|null} - Array of branch IDs the user can access, or null for super-admin (all branches)
+ */
+export const getUserAccessibleBranches = (user) => {
+  if (!user) {
+    console.warn('getUserAccessibleBranches: No user provided');
+    return [];
+  }
+
+  // Super-admin can access all branches (return null to indicate no filtering needed)
+  if (user.role === 'super-admin') {
+    console.log('getUserAccessibleBranches: Super-admin has access to all branches');
+    return null;
+  }
+
+  // Admin can only access their assigned branch
+  if (user.role === 'admin') {
+    // Try to get branch_details from different possible locations
+    const branchId = user.branch_details || user.expand?.branch_details?.id;
+
+    if (branchId) {
+      console.log(`getUserAccessibleBranches: Admin has access to branch: ${branchId}`);
+      return [branchId];
+    } else {
+      console.warn('getUserAccessibleBranches: Admin user has no branch_details assigned');
+      console.warn('User object:', {
+        id: user.id,
+        role: user.role,
+        branch_details: user.branch_details,
+        'expand.branch_details': user.expand?.branch_details
+      });
+      return [];
+    }
+  }
+
+  // Other roles (technician, customer) should not have branch access for orders
+  // but may access orders based on other criteria
+  console.log(`getUserAccessibleBranches: Role '${user.role}' has no branch-based order access`);
+  return [];
 };

@@ -16,9 +16,9 @@ const DeliveryFeeCalculator = ({ onFeeCalculated }) => {
 
   // Format currency for display
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PH', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PHP'
     }).format(amount || 0);
   };
 
@@ -89,15 +89,15 @@ const DeliveryFeeCalculator = ({ onFeeCalculated }) => {
               {distance > 10 && (
                 <>
                   <div className="text-muted-foreground">Rate 5-10km:</div>
-                  <div className="text-right">$2.00/km</div>
+                  <div className="text-right">₱2.00/km</div>
 
                   {distance > 20 && (
                     <>
                       <div className="text-muted-foreground">Rate 10-20km:</div>
-                      <div className="text-right">$1.50/km</div>
+                      <div className="text-right">₱1.50/km</div>
 
                       <div className="text-muted-foreground">Rate beyond 20km:</div>
-                      <div className="text-right">$1.00/km</div>
+                      <div className="text-right">₱1.00/km</div>
                     </>
                   )}
                 </>

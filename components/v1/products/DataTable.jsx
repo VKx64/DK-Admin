@@ -180,11 +180,11 @@ const DataTable = ({ data, rowSelection, setRowSelection, onTableReady, onDataCh
       accessorKey: "price",
       header: () => <div className="text-right font-medium">Price</div>,
       cell: ({ row }) => {
-        // Format the price as currency (e.g., $299.99)
+        // Format the price as currency (e.g., ₱299.99)
         const amount = parseFloat(row.getValue("price"));
-        const formatted = new Intl.NumberFormat("en-US", {
+        const formatted = new Intl.NumberFormat("en-PH", {
           style: "currency",
-          currency: "USD",
+          currency: "PHP",
         }).format(amount);
         return <div className="text-right font-medium">{formatted}</div>;
       },
