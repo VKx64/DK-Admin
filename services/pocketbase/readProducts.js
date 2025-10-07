@@ -46,7 +46,9 @@ export async function getProductsWithAllData(page = 1, perPage = 50, searchQuery
 
     // Create options object for filtering if needed
     const options = {
-      requestKey: null // Add this to prevent auto cancellation errors
+      requestKey: null, // Prevent auto cancellation
+      // Add cache busting to ensure fresh data
+      $autoCancel: false,
     };
 
     // Add search filter if provided
@@ -73,6 +75,12 @@ export async function getProductsWithAllData(page = 1, perPage = 50, searchQuery
         stock: result.items[0].expand?.product_stocks_via_product_id || 'No stock data',
         warranty: result.items[0].expand?.product_warranty_via_product_id || 'No warranty data'
       });
+
+      // Log the actual stock quantity if available
+      const stockData = result.items[0].expand?.product_stocks_via_product_id?.[0];
+      if (stockData) {
+        console.log('Stock quantity from database:', stockData.stock_quantity);
+      }
     }
 
     // Make the data easier to work with by organizing it better
@@ -95,6 +103,10 @@ export async function getProductsWithAllData(page = 1, perPage = 50, searchQuery
     // Log a sample of formatted data
     if (betterFormattedProducts.length > 0) {
       console.log('Sample formatted product:', betterFormattedProducts[0]);
+      console.log('Stock info:', {
+        stockObject: betterFormattedProducts[0].stock,
+        stockQuantity: betterFormattedProducts[0].stock?.stock_quantity
+      });
     }
 
     // Return the result with our better formatted products

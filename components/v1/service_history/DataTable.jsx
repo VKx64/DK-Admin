@@ -38,9 +38,9 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, userRole }) => {
 
     try {
       const records = await pb.collection('service_request').getFullList({
-        filter: 'status = "complete"',
-        sort: '-completed_date',
-        expand: 'user,product,technician'
+        filter: 'status = "completed"',
+        sort: '-updated', // Sort by updated date since completed_date may not exist
+        expand: 'user,assigned_technician'
       });
 
       console.log('Fetched service history:', records);
@@ -48,13 +48,16 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, userRole }) => {
       // Format the data for display
       const formattedData = records.map(record => ({
         id: record.id,
-        user: record.expand?.user?.name || record.user || 'Unknown User',
-        product: record.expand?.product?.name || record.product || 'Unknown Product',
-        technician: record.expand?.technician?.name || record.technician || 'Unassigned',
-        problemDescription: record.problem_description || 'No description',
+        user: record.expand?.user?.name || 'Unknown User',
+        product: record.product || 'Unknown Product',
+        technician: record.expand?.assigned_technician?.name || 'Unassigned',
+        problemDescription: record.problem || 'No description',
         diagnosisNotes: record.diagnosis_notes || 'No diagnosis notes',
-        completedDate: record.completed_date ? new Date(record.completed_date).toLocaleDateString() : 'Unknown',
+        completedDate: record.completed_date ? new Date(record.completed_date).toLocaleDateString() :
+                      (record.updated ? new Date(record.updated).toLocaleDateString() : 'Unknown'),
         createdDate: record.created ? new Date(record.created).toLocaleDateString() : 'Unknown',
+        requestedDate: record.requested_date ? new Date(record.requested_date).toLocaleDateString() : 'Not specified',
+        scheduledDate: record.scheduled_date ? new Date(record.scheduled_date).toLocaleDateString() : 'Not scheduled',
         diagnosedParts: (() => {
           try {
             return record.diagnosed_parts ? JSON.parse(record.diagnosed_parts) : [];
@@ -64,8 +67,13 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, userRole }) => {
           }
         })(),
         status: record.status,
+        remarks: record.remarks || '',
+        hasAttachment: !!record.attachment,
         // Include all original data for the dialog
-        originalRecord: record
+        originalRecord: {
+          ...record,
+          collectionId: record.collectionId || 'pbc_2589929617'
+        }
       }));
 
       setServiceData(formattedData);

@@ -9,6 +9,7 @@ import { deleteUser } from '@/services/pocketbase/deleteUsers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import pb from '@/services/pocketbase';
 
 const Page = () => {
   const [admins, setAdmins] = useState([]);
@@ -19,12 +20,24 @@ const Page = () => {
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchAdmins = React.useCallback(() => {
+  const fetchAdmins = React.useCallback(async () => {
     setLoading(true);
-    getUsersByRole('admin')
-      .then((users) => setAdmins(users || []))
-      .catch(() => setAdmins([]))
-      .finally(() => setLoading(false));
+    try {
+      // Fetch all admin users with their branch_details expanded
+      const users = await pb.collection('users').getFullList({
+        filter: 'role = "admin"',
+        expand: 'branch_details',
+        sort: 'created',
+        requestKey: null
+      });
+      console.log('Fetched admins with branch details:', users);
+      setAdmins(users || []);
+    } catch (error) {
+      console.error('Error fetching admins:', error);
+      setAdmins([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

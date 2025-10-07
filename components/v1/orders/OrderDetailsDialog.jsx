@@ -9,8 +9,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, TruckIcon } from "lucide-react";
 import { updateOrderStatus } from '@/services/pocketbase/updateOrders';
+import TechnicianSelector from './TechnicianSelector';
+import { assignTechnicianToOrder } from '@/services/pocketbase/assignTechnician';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import pb from '@/services/pocketbase';
 
 const OrderDetailsDialog = ({
   order,
@@ -23,11 +27,16 @@ const OrderDetailsDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState(order?.status || 'Pending');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [assignedTechnician, setAssignedTechnician] = useState(order?.assigned_technician || '');
+  const [isAssigningTechnician, setIsAssigningTechnician] = useState(false);
 
   // Update status when order changes
   useEffect(() => {
     if (order?.status) {
       setStatus(order.status);
+    }
+    if (order?.assigned_technician) {
+      setAssignedTechnician(order.assigned_technician);
     }
   }, [order]);
 
@@ -46,6 +55,40 @@ const OrderDetailsDialog = ({
     } finally {
       setIsUpdatingStatus(false);
     }
+  };
+
+  // Handle technician assignment
+  const handleTechnicianAssignment = async (technicianId) => {
+    if (!order) return;
+
+    setIsAssigningTechnician(true);
+    try {
+      const updatedOrder = await assignTechnicianToOrder(order.id, technicianId);
+      setAssignedTechnician(technicianId === 'unassign' ? '' : technicianId);
+      alert('Technician assigned successfully!');
+    } catch (error) {
+      console.error("Error assigning technician:", error);
+      alert(`Failed to assign technician: ${error.message}`);
+    } finally {
+      setIsAssigningTechnician(false);
+    }
+  };
+
+  // Get avatar URL for technician
+  const getAvatarUrl = (user) => {
+    if (!user || !user.avatar) return null;
+    return pb.files.getUrl(user, user.avatar, { thumb: '100x100' });
+  };
+
+  // Get initials for avatar fallback
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
 
   // Handle print functionality
@@ -285,6 +328,74 @@ const OrderDetailsDialog = ({
             )}
           </div>
         </div>
+
+        {/* Technician Assignment Section - Only show for COD orders */}
+        {order.mode_of_payment === "Cash On Delivery" && (user?.role === 'admin' || user?.role === 'super-admin') && (
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <TruckIcon className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold">Delivery Assignment</h3>
+            </div>
+
+            {/* Show assigned technician if exists */}
+            {order.expand?.assigned_technician && (
+              <div className="bg-blue-50 p-3 rounded-md mb-3 border border-blue-200">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={getAvatarUrl(order.expand.assigned_technician)} />
+                    <AvatarFallback>
+                      {getInitials(order.expand.assigned_technician.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">
+                      {order.expand.assigned_technician.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {order.expand.assigned_technician.email}
+                    </div>
+                  </div>
+                  <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                    Assigned
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Technician Selector */}
+            <TechnicianSelector
+              value={assignedTechnician}
+              onValueChange={handleTechnicianAssignment}
+              disabled={isAssigningTechnician}
+              label={order.expand?.assigned_technician ? "Reassign Technician" : "Assign Technician"}
+            />
+
+            {/* Delivery Proof Section - Show if order is completed */}
+            {order.delivery_proof_image && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="text-sm font-medium text-green-800 mb-2">
+                  ✓ Delivery Completed
+                </div>
+                {order.delivery_completed_date && (
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Completed: {new Date(order.delivery_completed_date).toLocaleString()}
+                  </div>
+                )}
+                <img
+                  src={pb.files.getUrl(order, order.delivery_proof_image)}
+                  alt="Proof of Delivery"
+                  className="w-full max-w-md rounded border border-green-300 cursor-pointer hover:opacity-90"
+                  onClick={() => window.open(pb.files.getUrl(order, order.delivery_proof_image), '_blank')}
+                />
+                {order.delivery_notes && (
+                  <div className="mt-2 text-sm">
+                    <span className="font-medium">Notes:</span> {order.delivery_notes}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Products */}
         <div className="mt-4">

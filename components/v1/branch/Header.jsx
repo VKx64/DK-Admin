@@ -15,12 +15,12 @@ const Header = ({ onCreated }) => {
           className="text-4xl text-[#1E1E1E]"
         />
         <h1 className="font-raleway font-semibold text-2xl text-[#1E1E1E]">
-          Branch Managers
+          Branch Admins
         </h1>
       </div>
       <Button onClick={() => setOpen(true)} className="flex items-center gap-2" size="lg">
         <Icon icon="mdi:plus" className="h-5 w-5" />
-        New Manager
+        New Admin
       </Button>
       <NewBranch open={open} onOpenChange={setOpen} onCreated={onCreated} />
     </div>
