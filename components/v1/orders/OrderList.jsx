@@ -79,6 +79,9 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, user }, ref) =>
     // Apply search filter if provided
     let filtered = data;
 
+    // Exclude completed orders from the orders page
+    filtered = filtered.filter(order => order.status !== 'completed');
+
     if (search) {
       const searchLower = search.toLowerCase();
       filtered = filtered.filter(order =>

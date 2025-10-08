@@ -3,14 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { getProductWithAllData } from '@/services/pocketbase/readProducts';
+import { getUsersByRole } from '@/services/pocketbase/readUsers';
+import { assignTechnicianToOrder, checkTechnicianAvailability } from '@/services/pocketbase/updateOrders';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, AlertCircle, UserCheck } from "lucide-react";
 import { updateOrderStatus } from '@/services/pocketbase/updateOrders';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const OrderDetailsDialog = ({
   order,
@@ -24,12 +36,59 @@ const OrderDetailsDialog = ({
   const [status, setStatus] = useState(order?.status || 'Pending');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
+  // State for technician assignment
+  const [technicians, setTechnicians] = useState([]);
+  const [selectedTechnician, setSelectedTechnician] = useState(null);
+  const [isAssigningTechnician, setIsAssigningTechnician] = useState(false);
+  const [technicianAvailability, setTechnicianAvailability] = useState({});
+
+  // State for confirmation dialog
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    technicianId: null,
+    technicianName: '',
+    incompleteCount: 0
+  });
+
   // Update status when order changes
   useEffect(() => {
     if (order?.status) {
       setStatus(order.status);
     }
+    if (order?.assigned_technician) {
+      setSelectedTechnician(order.assigned_technician);
+    }
   }, [order]);
+
+  // Fetch technicians when dialog opens
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      if (!open) return;
+
+      try {
+        const techList = await getUsersByRole('technician');
+        setTechnicians(techList);
+
+        // Check availability for each technician
+        const availabilityPromises = techList.map(async (tech) => {
+          const availability = await checkTechnicianAvailability(tech.id);
+          return { id: tech.id, ...availability };
+        });
+
+        const availabilityResults = await Promise.all(availabilityPromises);
+        const availabilityMap = {};
+        availabilityResults.forEach(result => {
+          availabilityMap[result.id] = result;
+        });
+
+        setTechnicianAvailability(availabilityMap);
+      } catch (error) {
+        console.error("Error fetching technicians:", error);
+      }
+    };
+
+    fetchTechnicians();
+  }, [open]);
 
   // Handle status change
   const handleStatusChange = async (newStatus) => {
@@ -45,6 +104,49 @@ const OrderDetailsDialog = ({
       alert(`Failed to update status: ${error.message}`);
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  // Handle technician selection
+  const handleTechnicianSelect = async (technicianId) => {
+    const technician = technicians.find(t => t.id === technicianId);
+    const availability = technicianAvailability[technicianId];
+
+    if (!availability?.isAvailable) {
+      // Show confirmation dialog if technician has incomplete orders
+      setConfirmDialog({
+        isOpen: true,
+        technicianId: technicianId,
+        technicianName: technician?.name || 'Unknown',
+        incompleteCount: availability?.incompleteCount || 0
+      });
+    } else {
+      // Assign directly if available
+      await assignTechnician(technicianId);
+    }
+  };
+
+  // Assign technician to order
+  const assignTechnician = async (technicianId) => {
+    setIsAssigningTechnician(true);
+    try {
+      await assignTechnicianToOrder(order.id, technicianId);
+      setSelectedTechnician(technicianId);
+
+      // Refresh availability
+      const availability = await checkTechnicianAvailability(technicianId);
+      setTechnicianAvailability(prev => ({
+        ...prev,
+        [technicianId]: availability
+      }));
+
+      alert('Technician assigned successfully!');
+    } catch (error) {
+      console.error("Error assigning technician:", error);
+      alert(`Failed to assign technician: ${error.message}`);
+    } finally {
+      setIsAssigningTechnician(false);
+      setConfirmDialog({ isOpen: false, technicianId: null, technicianName: '', incompleteCount: 0 });
     }
   };
 
@@ -376,6 +478,96 @@ const OrderDetailsDialog = ({
           </div>
         </div>
 
+        {/* Technician Assignment (only for delivery orders) */}
+        {order.mode_of_payment === 'Cash On Delivery' && (
+          <div className="mt-4">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Assign Delivery Technician
+            </h3>
+            <div className="bg-gray-50 p-3 rounded-md">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between"
+                    disabled={isAssigningTechnician}
+                  >
+                    {isAssigningTechnician ? (
+                      <span className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current mr-2"></div>
+                        Assigning...
+                      </span>
+                    ) : selectedTechnician ? (
+                      <span className="flex items-center justify-between w-full">
+                        <span>{technicians.find(t => t.id === selectedTechnician)?.name || 'Unknown'}</span>
+                        <CheckIcon className="h-4 w-4 text-green-600" />
+                      </span>
+                    ) : (
+                      'Select Technician'
+                    )}
+                    <ChevronDownIcon className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[300px]">
+                  {technicians.length === 0 ? (
+                    <div className="px-2 py-3 text-sm text-gray-500 text-center">
+                      No technicians available
+                    </div>
+                  ) : (
+                    technicians.map((technician) => {
+                      const availability = technicianAvailability[technician.id];
+                      const isAvailable = availability?.isAvailable ?? true;
+                      const incompleteCount = availability?.incompleteCount ?? 0;
+
+                      return (
+                        <DropdownMenuItem
+                          key={technician.id}
+                          onClick={() => handleTechnicianSelect(technician.id)}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex flex-col">
+                            <span className={selectedTechnician === technician.id ? 'font-medium' : ''}>
+                              {technician.name}
+                            </span>
+                            {!isAvailable && (
+                              <span className="text-xs text-orange-600 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                {incompleteCount} incomplete {incompleteCount === 1 ? 'delivery' : 'deliveries'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {selectedTechnician === technician.id && (
+                              <CheckIcon className="h-4 w-4 text-green-600" />
+                            )}
+                            {isAvailable ? (
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                                Available
+                              </span>
+                            ) : (
+                              <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
+                                Busy
+                              </span>
+                            )}
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {selectedTechnician && (
+                <div className="mt-2 text-xs text-green-600 bg-green-50 p-2 rounded flex items-center gap-2">
+                  <CheckIcon className="h-4 w-4" />
+                  Technician assigned: {technicians.find(t => t.id === selectedTechnician)?.name}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <DialogFooter className="mt-4 flex items-center gap-2">
           {/* Status Dropdown */}
           <div className="mr-auto">
@@ -440,6 +632,33 @@ const OrderDetailsDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Confirmation Dialog for Busy Technician */}
+      <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => !isAssigningTechnician && setConfirmDialog(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              Technician Has Incomplete Deliveries
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{confirmDialog.technicianName}</strong> currently has <strong>{confirmDialog.incompleteCount}</strong> incomplete {confirmDialog.incompleteCount === 1 ? 'delivery' : 'deliveries'}.
+              <br /><br />
+              Are you sure you want to assign this technician to this order? They may not be immediately available.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isAssigningTechnician}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => assignTechnician(confirmDialog.technicianId)}
+              disabled={isAssigningTechnician}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {isAssigningTechnician ? "Assigning..." : "Assign Anyway"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

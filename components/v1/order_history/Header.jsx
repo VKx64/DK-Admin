@@ -1,14 +1,10 @@
 "use client";
 import { Icon } from "@iconify/react";
 import React, { useState } from "react";
-import SearchBar from "../SearchBar";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import OrderForm from "./OrderForm";
 
-const Header = ({ onSearchChange, onOrderAdded, onRefresh }) => {
-  // State to control the order form dialog
-  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
+const Header = ({ onSearchChange, onRefresh }) => {
   // State to handle refresh button loading state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -33,17 +29,16 @@ const Header = ({ onSearchChange, onOrderAdded, onRefresh }) => {
         {/* Header Text and Icon */}
         <div className="flex flex-row gap-3 items-center w-fit">
           <Icon
-            icon="material-symbols:order-approve-outline"
+            icon="mingcute:history-line"
             className="text-3xl text-[#1E1E1E]"
           />
           <h1 className="font-raleway font-semibold text-2xl text-[#1E1E1E]">
-            Order Management
+            Order History
           </h1>
         </div>
 
-        {/* Search bar and Buttons */}
+        {/* Refresh Button */}
         <div className="flex flex-row gap-3">
-          <SearchBar onChange={onSearchChange} />
           <Button
             size={"lg"}
             variant={"outline"}
@@ -55,30 +50,8 @@ const Header = ({ onSearchChange, onOrderAdded, onRefresh }) => {
               className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button
-            size={"lg"}
-            className={"bg-[#5CCFBC]"}
-            onClick={() => setIsOrderFormOpen(true)}
-          >
-            <Icon icon="mingcute:add-line" className="size-6" /> New Order
-          </Button>
         </div>
       </div>
-
-      {/* Order Form Dialog */}
-      <OrderForm
-        isOpen={isOrderFormOpen}
-        onClose={() => setIsOrderFormOpen(false)}
-        onSuccess={(newOrder) => {
-          // Close the form
-          setIsOrderFormOpen(false);
-
-          // Pass the event up to refresh the order list
-          if (onOrderAdded) {
-            onOrderAdded(newOrder);
-          }
-        }}
-      />
     </div>
   );
 };

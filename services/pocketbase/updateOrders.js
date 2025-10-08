@@ -123,3 +123,60 @@ export async function updateBatchOrdersStatus(orderIds, newStatus) {
     throw error;
   }
 }
+
+// FUNCTION TO ASSIGN TECHNICIAN TO ORDER
+export async function assignTechnicianToOrder(orderId, technicianId) {
+  try {
+    console.log(`Assigning technician ${technicianId} to order ${orderId}`);
+
+    // Update the order with the assigned technician
+    const updatedOrder = await pb.collection("user_order").update(orderId, {
+      assigned_technician: technicianId
+    }, {
+      requestKey: null
+    });
+
+    console.log('================================================================================================');
+    console.log('Updated order with technician:', updatedOrder);
+    console.log('Order ID:', updatedOrder.id);
+    console.log('Assigned technician:', updatedOrder.assigned_technician);
+    console.log('================================================================================================');
+
+    return updatedOrder;
+  } catch (error) {
+    console.error(`Error assigning technician to order ${orderId}:`, error);
+    throw error;
+  }
+}
+
+// FUNCTION TO CHECK IF TECHNICIAN HAS INCOMPLETE DELIVERIES
+export async function checkTechnicianAvailability(technicianId) {
+  try {
+    console.log(`Checking availability for technician ${technicianId}`);
+
+    // Fetch orders assigned to this technician that are not completed
+    const incompleteOrders = await pb.collection("user_order").getFullList({
+      filter: `assigned_technician = "${technicianId}" && status != "completed" && status != "Declined" && status != "ready_for_pickup"`,
+      requestKey: null
+    });
+
+    const isAvailable = incompleteOrders.length === 0;
+
+    console.log('================================================================================================');
+    console.log(`Technician ${technicianId} has ${incompleteOrders.length} incomplete deliveries`);
+    console.log('Is available:', isAvailable);
+    if (!isAvailable) {
+      console.log('Incomplete orders:', incompleteOrders.map(o => o.id));
+    }
+    console.log('================================================================================================');
+
+    return {
+      isAvailable,
+      incompleteCount: incompleteOrders.length,
+      incompleteOrders
+    };
+  } catch (error) {
+    console.error(`Error checking technician availability for ${technicianId}:`, error);
+    throw error;
+  }
+}
