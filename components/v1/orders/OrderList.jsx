@@ -52,7 +52,10 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, user }, ref) =>
         }
 
         const allOrders = await getOrdersByRole(user);
-        setOrderData(allOrders);
+
+        // Filter out completed orders (they should only appear in order history)
+        const activeOrders = allOrders.filter(order => order.status !== 'completed');
+        setOrderData(activeOrders);
 
         // Apply filters and pagination
         applyFiltersAndPagination(allOrders, searchQuery, selectedStatus, page, perPage);
@@ -145,22 +148,29 @@ const OrderList = forwardRef(({ searchQuery = "", onDataChanged, user }, ref) =>
       <div className='w-full bg-white rounded-sm shadow-sm p-4 flex flex-col gap-4 overflow-hidden'>
         {/* Role-based filtering info */}
         {user && (
-          <div className="text-xs bg-blue-50 border border-blue-200 rounded p-2">
-            {user.role === 'super-admin' && (
-              <span className="text-blue-700">
-                ℹ️ Viewing all orders from all branches (Super Admin)
+          <div className="space-y-2">
+            <div className="text-xs bg-blue-50 border border-blue-200 rounded p-2">
+              {user.role === 'super-admin' && (
+                <span className="text-blue-700">
+                  ℹ️ Viewing active orders from all branches (Super Admin)
+                </span>
+              )}
+              {user.role === 'admin' && (
+                <span className="text-blue-700">
+                  ℹ️ Viewing active orders from your assigned branch only (Admin)
+                </span>
+              )}
+              {user.role !== 'super-admin' && user.role !== 'admin' && (
+                <span className="text-blue-700">
+                  ℹ️ Viewing your active orders only
+                </span>
+              )}
+            </div>
+            <div className="text-xs bg-green-50 border border-green-200 rounded p-2">
+              <span className="text-green-700">
+                📋 Completed orders have been moved to Order History for better organization
               </span>
-            )}
-            {user.role === 'admin' && (
-              <span className="text-blue-700">
-                ℹ️ Viewing orders from your assigned branch only (Admin)
-              </span>
-            )}
-            {user.role !== 'super-admin' && user.role !== 'admin' && (
-              <span className="text-blue-700">
-                ℹ️ Viewing your orders only
-              </span>
-            )}
+            </div>
           </div>
         )}
 

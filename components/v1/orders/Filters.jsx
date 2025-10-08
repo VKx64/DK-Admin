@@ -17,12 +17,17 @@ const Filters = ({
   onStatusChange,
   selectedStatus = ""
 }) => {
-  // Order status options based on the PocketBase schema
+  // Order status options based on the PocketBase schema (excluding completed)
   const orderStatuses = [
-    { label: "All Orders", value: "" },
+    { label: "All Active Orders", value: "" },
     { label: "Pending", value: "Pending" },
     { label: "Approved", value: "Approved" },
-    { label: "Declined", value: "Declined" }
+    { label: "Declined", value: "Declined" },
+    { label: "Packing", value: "packing" },
+    { label: "Ready for Delivery", value: "ready_for_delivery" },
+    { label: "Ready for Pickup", value: "ready_for_pickup" },
+    { label: "On the Way", value: "on_the_way" },
+    { label: "Cancelled", value: "cancelled" }
   ];
 
   return (

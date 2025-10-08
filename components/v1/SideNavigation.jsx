@@ -45,6 +45,7 @@ const SideNavigation = () => {
         {(isAdmin) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts"} href={'/parts'} />}
         {(isAdmin) && <ItemNavigation icon={"mingcute:settings-3-line"} text={"Parts Log"} href={'/parts_history'} />}
         {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:receive-money-line"} text={"Orders"} href={'/orders'} />}
+        {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:history-line"} text={"Order History"} href={'/order_history'} />}
         {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:air-condition-open-line"} text={"Products"} href={'/products'} />}
         {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:user-heart-line"} text={"Customers"} href={'/customers'} />}
         {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:user-setting-line"} text={"Technicians"} href={'/technicians'} />}
