@@ -9,6 +9,15 @@ const Page = () => {
   // State for managing search query across components
   const [searchQuery, setSearchQuery] = useState("");
 
+<<<<<<< HEAD
+=======
+  // State for date range filtering
+  const [dateRange, setDateRange] = useState({
+    from: null,
+    to: null
+  });
+
+>>>>>>> ce37edfb002a03c640fc0660a8685a852fc89176
   // Reference to the OrderHistoryList component for refreshing
   const orderHistoryListRef = useRef(null);
 
@@ -28,6 +37,28 @@ const Page = () => {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // Handle date range changes
+  const handleDateRangeChange = (range) => {
+    setDateRange(range);
+  };
+
+  // Handle report generation
+  const handleGenerateReport = () => {
+    if (orderHistoryListRef.current && orderHistoryListRef.current.generateReport) {
+      orderHistoryListRef.current.generateReport();
+    }
+  };
+
+  // Handle print report
+  const handlePrintReport = () => {
+    if (orderHistoryListRef.current && orderHistoryListRef.current.printReport) {
+      orderHistoryListRef.current.printReport();
+    }
+  };
+
+>>>>>>> ce37edfb002a03c640fc0660a8685a852fc89176
   // Handle data changes from OrderHistoryList
   const handleDataChanged = () => {
     // Any logic needed when order data changes
@@ -39,10 +70,21 @@ const Page = () => {
       <Header
         onSearchChange={handleSearch}
         onRefresh={handleRefresh}
+<<<<<<< HEAD
+=======
+        onDateRangeChange={handleDateRangeChange}
+        dateRange={dateRange}
+        onGenerateReport={handleGenerateReport}
+        onPrintReport={handlePrintReport}
+>>>>>>> ce37edfb002a03c640fc0660a8685a852fc89176
       />
       <OrderHistoryList
         ref={orderHistoryListRef}
         searchQuery={searchQuery}
+<<<<<<< HEAD
+=======
+        dateRange={dateRange}
+>>>>>>> ce37edfb002a03c640fc0660a8685a852fc89176
         onDataChanged={handleDataChanged}
         user={user}
       />
@@ -50,4 +92,8 @@ const Page = () => {
   );
 };
 
+<<<<<<< HEAD
 export default Page;
+=======
+export default Page;
+>>>>>>> ce37edfb002a03c640fc0660a8685a852fc89176
