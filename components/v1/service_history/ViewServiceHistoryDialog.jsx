@@ -17,21 +17,23 @@ import { Icon } from "@iconify/react";
 const ViewServiceHistoryDialog = ({ isOpen, onOpenChange, service }) => {
   if (!service) return null;
 
-  // Format the attachment URL if it exists
-  const attachmentUrl = service.originalRecord?.attachmentUrl || "/Images/default_user.jpg";
+  // Format the attachment URL if it exists using PocketBase file URL helper
+  const attachmentUrl = service.originalRecord?.attachment
+    ? `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/${service.originalRecord.collectionId}/${service.originalRecord.id}/${service.originalRecord.attachment}`
+    : "/Images/default_user.jpg";
 
   // Format status text for display
   const formatStatus = (status) => {
     if (!status) return "Unknown";
-    return status === "complete" ? "Completed" :
-           status === "in_progress" ? "In Progress" :
+    return status === "completed" ? "Completed" :
            status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   // Handle opening attachment in new tab
   const openAttachmentInNewTab = () => {
-    if (service.originalRecord?.attachmentUrl) {
-      window.open(service.originalRecord.attachmentUrl, '_blank');
+    if (service.originalRecord?.attachment) {
+      const url = `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/${service.originalRecord.collectionId}/${service.originalRecord.id}/${service.originalRecord.attachment}`;
+      window.open(url, '_blank');
     }
   };
 
@@ -200,7 +202,7 @@ const ViewServiceHistoryDialog = ({ isOpen, onOpenChange, service }) => {
               <h4 className="font-medium mb-3 flex justify-between items-center">
                 Attachment
               </h4>
-              {service.originalRecord?.hasAttachment ? (
+              {service.originalRecord?.attachment ? (
                 <div
                   className="cursor-pointer"
                   onClick={openAttachmentInNewTab}

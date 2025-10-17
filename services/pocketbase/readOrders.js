@@ -7,7 +7,7 @@ export async function getAllOrders() {
   try {
     // Fetch all orders with expanded relations
     const result = await pb.collection("user_order").getFullList({
-      expand: 'user,address,branch,assigned_technician',
+      expand: 'user,address,branch,assigned_technician,products,product_pricing',
       requestKey: null
     });
 
@@ -57,7 +57,7 @@ export async function getOrdersByRole(user) {
     // Super-admin can see all orders
     if (canViewAllOrders(userRole)) {
       result = await pb.collection("user_order").getFullList({
-        expand: 'user,address,branch,assigned_technician',
+        expand: 'user,address,branch,assigned_technician,products,product_pricing',
         requestKey: null
       });
       console.log(`✅ Super-admin retrieved ${result.length} orders from all branches`);
@@ -83,7 +83,7 @@ export async function getOrdersByRole(user) {
 
       result = await pb.collection("user_order").getFullList({
         filter: branchFilter,
-        expand: 'user,address,branch,assigned_technician',
+        expand: 'user,address,branch,assigned_technician,products,product_pricing',
         requestKey: null
       });
 
@@ -100,7 +100,7 @@ export async function getOrdersByRole(user) {
     else {
       result = await pb.collection("user_order").getFullList({
         filter: `user = "${user.id}"`,
-        expand: 'user,address,branch,assigned_technician',
+        expand: 'user,address,branch,assigned_technician,products,product_pricing',
         requestKey: null
       });
       console.log(`✅ User role '${userRole}' retrieved ${result.length} personal orders`);

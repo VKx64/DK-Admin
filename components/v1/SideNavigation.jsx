@@ -32,11 +32,9 @@ const SideNavigation = () => {
 
       <div className='w-full h-full flex flex-col gap-1'>
 
-        {/* Home - visible for non-technician roles */}
-        {!isTechnician && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"Home"} href={'/'} />}
-
         {/* Technician Role */}
         {(isTechnician) && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"My Details"} href={'/technitian_information'} />}
+        {(isTechnician) && <ItemNavigation icon={"mingcute:truck-line"} text={"My Deliveries"} href={'/technician_deliveries'} />}
 
         {/* Super Admin Role */}
         {(isSuperAdmin) && <ItemNavigation icon={"mingcute:calendar-day-line"} text={"Branch"} href={'/branch'} />}
@@ -54,7 +52,7 @@ const SideNavigation = () => {
 
         {/* Combined Role */}
         {(isAdmin || isTechnician) && <ItemNavigation icon={"mingcute:user-setting-line"} text={"Service"} href={'/service'} />}
-        {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:history-line"} text={"Service History"} href={'/service_history'} />}
+        {(isAdmin) && <ItemNavigation icon={"mingcute:history-line"} text={"Service History"} href={'/service_history'} />}
         {(isAdmin || isSuperAdmin) && <ItemNavigation icon={"mingcute:chart-line-line"} text={"Analytics"} href={'/analytics'} />}
 
       </div>

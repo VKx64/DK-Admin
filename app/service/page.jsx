@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/v1/service/Header';
 import DataTable from '@/components/v1/service/DataTable';
+import TechnicianAnalytics from '@/components/v1/service/TechnicianAnalytics';
 import { pb } from '@/lib/pocketbase';
 
 const ServicePage = () => {
@@ -37,6 +38,9 @@ const ServicePage = () => {
         onRefresh={handleRefresh}
         onScheduledFilterChange={handleScheduledFilterChange}
       />
+
+      {/* Technician Analytics */}
+      <TechnicianAnalytics />
 
       {/* DataTable component displays the service request data */}
       <DataTable

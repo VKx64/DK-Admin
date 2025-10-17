@@ -21,6 +21,7 @@ const ProductsPage = () => {
 
   // Handle data changes (create/update/delete)
   const handleDataChanged = () => {
+    console.log('🔄 Products data changed, triggering refresh...');
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -39,6 +40,7 @@ const ProductsPage = () => {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onDataChanged={handleDataChanged}
+          refreshTrigger={refreshTrigger}
           userRole={userRole}
         />
       </div>

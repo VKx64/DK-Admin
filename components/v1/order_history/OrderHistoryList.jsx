@@ -271,6 +271,7 @@ const OrderHistoryList = forwardRef(({ searchQuery = "", onDataChanged, user }, 
               border: 1px solid #ddd;
               padding: 12px;
               text-align: left;
+              vertical-align: top;
             }
             th {
               background-color: #0A1727;
@@ -279,6 +280,18 @@ const OrderHistoryList = forwardRef(({ searchQuery = "", onDataChanged, user }, 
             }
             tr:nth-child(even) {
               background-color: #f9f9f9;
+            }
+            td ul {
+              margin: 0;
+              padding-left: 20px;
+              list-style-type: none;
+            }
+            td ul li {
+              padding: 3px 0;
+              border-bottom: 1px dotted #ddd;
+            }
+            td ul li:last-child {
+              border-bottom: none;
             }
             .footer {
               margin-top: 30px;
@@ -322,20 +335,71 @@ const OrderHistoryList = forwardRef(({ searchQuery = "", onDataChanged, user }, 
                 <th>Order ID</th>
                 <th>Customer</th>
                 <th>Products</th>
+                <th>Delivery Fee</th>
                 <th>Total Price</th>
                 <th>Date</th>
               </tr>
             </thead>
             <tbody>
-              ${dataToPrint.map(order => `
-                <tr>
-                  <td>${order.id}</td>
-                  <td>${order.expand?.user?.name || order.guest_user || 'N/A'}</td>
-                  <td>${order.expand?.products?.map(p => p.product_name).join(', ') || 'N/A'}</td>
-                  <td>₱${(order.total_price || 0).toFixed(2)}</td>
-                  <td>${new Date(order.created).toLocaleDateString()}</td>
-                </tr>
-              `).join('')}
+              ${dataToPrint.map(order => {
+                // Build product list with prices
+                let productList = 'N/A';
+                let productTotal = 0;
+
+                if (order.expand?.products && order.expand.products.length > 0) {
+                  productList = '<ul style="margin: 0; padding-left: 20px;">';
+
+                  order.expand.products.forEach((product, index) => {
+                    const productName = product.product_name || 'Unknown Product';
+
+                    // Try multiple ways to get the price
+                    let price = 0;
+
+                    // Method 1: Check expand.product_pricing array
+                    if (order.expand?.product_pricing && order.expand.product_pricing[index]) {
+                      const pricing = order.expand.product_pricing[index];
+                      price = pricing.final_price || pricing.price || 0;
+                    }
+                    // Method 2: Check if product has pricing directly
+                    else if (product.final_price !== undefined) {
+                      price = product.final_price;
+                    }
+                    else if (product.price !== undefined) {
+                      price = product.price;
+                    }
+                    // Method 3: Check if pricing is embedded in the product expand
+                    else if (product.expand?.product_pricing) {
+                      const pricing = Array.isArray(product.expand.product_pricing)
+                        ? product.expand.product_pricing[0]
+                        : product.expand.product_pricing;
+                      price = pricing?.final_price || pricing?.price || 0;
+                    }
+
+                    productTotal += price;
+                    productList += '<li><strong>' + productName + '</strong>: ₱' + price.toFixed(2) + '</li>';
+                  });
+
+                  productList += '</ul>';
+                } else if (order.products && order.products.length > 0) {
+                  // Fallback: If no expanded products, just show IDs or count
+                  productList = order.products.length + ' product(s)';
+                }
+
+                const deliveryFee = order.delivery_fee || 0;
+                const calculatedTotal = productTotal + deliveryFee;
+                const displayTotal = order.total_price || calculatedTotal;
+
+                return `
+                  <tr>
+                    <td>${order.id}</td>
+                    <td>${order.expand?.user?.name || order.guest_user || 'N/A'}</td>
+                    <td>${productList}</td>
+                    <td>₱${deliveryFee.toFixed(2)}</td>
+                    <td><strong>₱${displayTotal.toFixed(2)}</strong></td>
+                    <td>${new Date(order.created).toLocaleDateString()}</td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
 

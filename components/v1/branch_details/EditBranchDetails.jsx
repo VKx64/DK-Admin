@@ -203,7 +203,7 @@ const EditBranchDetails = ({ open, onOpenChange, branchDetail, onSuccess }) => {
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="no-admins" disabled>
                         <span className="text-gray-500">No available admin users</span>
                       </SelectItem>
                     )}

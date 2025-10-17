@@ -80,6 +80,39 @@ const ViewAdmin = ({ open, onOpenChange, admin }) => {
                 <div className="capitalize">{admin.role || "—"}</div>
               </div>
             </div>
+
+            {/* Branch Information */}
+            {admin.expand?.branch_details && (
+              <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+                <h4 className="font-medium mb-3 text-blue-900">Branch Assignment</h4>
+                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                  <div className="font-medium text-gray-700">Branch Name:</div>
+                  <div className="font-medium">{admin.expand.branch_details.branch_name || "—"}</div>
+
+                  <div className="font-medium text-gray-700">Branch Email:</div>
+                  <div>{admin.expand.branch_details.branch_email || "—"}</div>
+
+                  {admin.expand.branch_details.branch_latitude && admin.expand.branch_details.branch_longitude && (
+                    <>
+                      <div className="font-medium text-gray-700">Location:</div>
+                      <div className="text-xs">
+                        Lat: {admin.expand.branch_details.branch_latitude.toFixed(6)},
+                        Long: {admin.expand.branch_details.branch_longitude.toFixed(6)}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!admin.expand?.branch_details && (
+              <div className="bg-amber-50 p-4 rounded-md border border-amber-200">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <Icon icon="mdi:alert" className="h-5 w-5" />
+                  <span className="text-sm font-medium">No branch assigned to this admin</span>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* Account Tab */}

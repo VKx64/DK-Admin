@@ -315,6 +315,21 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, scheduledOnly = false
       return;
     }
 
+    // Get the current service to check its status
+    const currentService = serviceData.find(service => service.id === serviceId);
+
+    // Prevent changing status from "scheduled" to anything except "completed"
+    if (currentService?.status === "scheduled" && newStatus !== "completed") {
+      toast.error("Scheduled services can only be marked as completed");
+      return;
+    }
+
+    // Prevent changing status from "completed"
+    if (currentService?.status === "completed") {
+      toast.error("Completed services cannot be modified");
+      return;
+    }
+
     setIsUpdatingStatus(true);
     try {
       await pb.collection('service_request').update(serviceId, {
@@ -423,8 +438,6 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, scheduledOnly = false
           switch (status) {
             case "pending":
               return "bg-amber-100 text-amber-800";
-            case "in_progress":
-              return "bg-blue-100 text-blue-800";
             case "scheduled":
               return "bg-purple-100 text-purple-800";
             case "completed":
@@ -437,15 +450,37 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, scheduledOnly = false
         // Format status for display
         const formatStatus = (status) => {
           if (!status) return "unknown";
-          return status === "in_progress" ? "in progress" : status;
+          return status;
         };
 
-        // If admin user or technician, show dropdown for status change
+        // If admin user or technician, show dropdown for status change (but restrict based on status)
         if (isAdmin || isTechnician) {
+          // If status is "scheduled", it cannot be modified - only show Complete button for technicians
+          if (status === "scheduled") {
+            return (
+              <div className="text-center flex items-center gap-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(status)}`}>
+                  {formatStatus(status)}
+                </span>
+                {isTechnician && (
+                  <Button
+                    size="sm"
+                    disabled={isUpdatingStatus}
+                    onClick={() => handleStatusChange(row.original.id, "completed")}
+                    className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
+                  >
+                    Complete
+                  </Button>
+                )}
+              </div>
+            );
+          }
+
+          // For other statuses, show dropdown but limit options
           return (
             <div className="text-center">
               <Select
-                disabled={isUpdatingStatus}
+                disabled={isUpdatingStatus || status === "completed"}
                 value={status}
                 onValueChange={(value) => handleStatusChange(row.original.id, value)}
               >
@@ -454,7 +489,6 @@ const DataTable = ({ searchQuery = "", refreshTrigger = 0, scheduledOnly = false
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="scheduled">Scheduled</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>

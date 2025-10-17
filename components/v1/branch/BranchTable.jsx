@@ -62,10 +62,23 @@ const BranchTable = React.memo(({ users = [], isLoading = false, onView, onEdit,
       size: 180,
     },
     {
+      id: "branch",
+      header: () => <div className="text-left font-medium">Branch Name</div>,
+      cell: ({ row }) => {
+        const branchDetails = row.original.expand?.branch_details;
+        return (
+          <div className="text-left">
+            {branchDetails?.branch_name || <span className="text-muted-foreground italic">No branch assigned</span>}
+          </div>
+        );
+      },
+      size: 180,
+    },
+    {
       accessorKey: "role",
       header: () => <div className="text-left font-medium">Role</div>,
       cell: ({ row }) => (
-        <div className="text-left">{row.getValue("role") || "-"}</div>
+        <div className="text-left capitalize">{row.getValue("role") || "-"}</div>
       ),
       size: 100,
     },

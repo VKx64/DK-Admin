@@ -34,8 +34,7 @@ const ViewServiceDialog = ({ isOpen, onOpenChange, service, onServiceUpdate }) =
   // Format status text for display
   const formatStatus = (status) => {
     if (!status) return "Unknown";
-    return status === "in_progress" ? "In Progress" :
-           status.charAt(0).toUpperCase() + status.slice(1);
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   // Handle opening attachment in new tab
@@ -60,7 +59,7 @@ const ViewServiceDialog = ({ isOpen, onOpenChange, service, onServiceUpdate }) =
     setIsCompletingService(true);
     try {
       await pb.collection('service_request').update(service.id, {
-        status: 'complete',
+        status: 'completed',
         completed_by: currentUser.id,
         completed_date: new Date().toISOString()
       });
@@ -232,7 +231,7 @@ const ViewServiceDialog = ({ isOpen, onOpenChange, service, onServiceUpdate }) =
           {/* Technician Actions */}
           {isAssignedTechnician && (
             <>
-              {service.status !== 'scheduled' && service.status !== 'complete' && (
+              {service.status !== 'scheduled' && service.status !== 'completed' && (
                 <Button
                   onClick={() => setIsDiagnoseDialogOpen(true)}
                   className="bg-blue-600 hover:bg-blue-700"

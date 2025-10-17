@@ -16,9 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Icon } from "@iconify/react";
 import { createOrder } from "@/services/pocketbase/createOrders";
 import { getProductsWithAllData } from "@/services/pocketbase/readProducts";
 import pb from "@/services/pocketbase";
+import { cn } from "@/lib/utils";
 
 /**
  * OrderForm - A form component for creating new orders
@@ -35,6 +39,7 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
 
   // State for customer selection
   const [customers, setCustomers] = useState([]);
+  const [openCustomerCombobox, setOpenCustomerCombobox] = useState(false);
 
   // State for product selection
   const [products, setProducts] = useState([]);
@@ -744,21 +749,60 @@ const OrderForm = ({ isOpen, onClose, onSuccess }) => {
                       required: customerTypeValue === "existing" ? "Customer selection is required" : false
                     }}
                     render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger className={errors.user ? "border-red-500" : ""}>
-                          <SelectValue placeholder="Select a customer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {customers.map(customer => (
-                            <SelectItem key={customer.id} value={customer.id}>
-                              {customer.name || customer.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={openCustomerCombobox} onOpenChange={setOpenCustomerCombobox}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openCustomerCombobox}
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground",
+                              errors.user && "border-red-500"
+                            )}
+                          >
+                            {field.value
+                              ? customers.find((customer) => customer.id === field.value)?.name ||
+                                customers.find((customer) => customer.id === field.value)?.email
+                              : "Select a customer"}
+                            <Icon icon="mdi:unfold-more-horizontal" className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search customer by name or email..." />
+                            <CommandList>
+                              <CommandEmpty>No customer found.</CommandEmpty>
+                              <CommandGroup>
+                                {customers.map((customer) => (
+                                  <CommandItem
+                                    key={customer.id}
+                                    value={customer.name || customer.email}
+                                    onSelect={() => {
+                                      field.onChange(customer.id)
+                                      setOpenCustomerCombobox(false)
+                                    }}
+                                  >
+                                    <Icon
+                                      icon="mdi:check"
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === customer.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span>{customer.name || customer.email}</span>
+                                      {customer.name && customer.email && (
+                                        <span className="text-xs text-gray-500">{customer.email}</span>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     )}
                   />
                   {errors.user && (

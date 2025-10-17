@@ -292,27 +292,331 @@ const SalesAnalytics = ({
   };
 
   const generateReport = () => {
-    // Placeholder for report generation logic
-    console.log("Generating sales report...");
-
+    // Create report data
     const reportData = {
       filters: {
         timeRange: selectedTimeRange,
-        date: selectedDate,
+        dateRange: {
+          start: format(dateRange.start, 'MMMM dd, yyyy'),
+          end: format(dateRange.end, 'MMMM dd, yyyy')
+        },
         branch: selectedBranch === "all" ? "All Branches" : branches.find(b => b.id === selectedBranch)?.branch_name,
         status: selectedStatus === "all" ? "All Status" : selectedStatus,
-        searchTerm
       },
       summary: {
         totalOrders: salesData.totalOrders,
         totalRevenue: salesData.totalRevenue,
-        averageOrderValue: salesData.averageOrderValue
+        averageOrderValue: salesData.averageOrderValue,
+        topProductsCount: salesData.topProducts.length
       },
-      orders: filteredOrders
+      topProducts: salesData.productSales,
+      dailySales: salesData.dailySales,
+      branchSales: salesData.branchSales
     };
 
-    // Here you could implement actual report generation/download
-    alert(`Report generated! Total Orders: ${reportData.summary.totalOrders}, Revenue: ${formatCurrency(reportData.summary.totalRevenue)}`);
+    // Generate HTML report
+    const reportHTML = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sales Report - ${reportData.filters.dateRange.start} to ${reportData.filters.dateRange.end}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            color: #333;
+          }
+          .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .header {
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          h1 {
+            color: #1f2937;
+            font-size: 32px;
+            margin-bottom: 10px;
+          }
+          .report-info {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 10px;
+          }
+          .report-info p {
+            margin: 5px 0;
+          }
+          .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+          }
+          .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          }
+          .card.green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          }
+          .card.blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          }
+          .card.orange {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          }
+          .card-title {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .card-value {
+            font-size: 28px;
+            font-weight: bold;
+          }
+          .section {
+            margin-bottom: 40px;
+          }
+          .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+          }
+          th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+          }
+          tr:hover {
+            background: #f9fafb;
+          }
+          .text-right {
+            text-align: right;
+          }
+          .rank {
+            background: #3b82f6;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+          }
+          .rank.gold {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+          }
+          .rank.silver {
+            background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+          }
+          .rank.bronze {
+            background: linear-gradient(135deg, #cd7f32 0%, #b8692e 100%);
+          }
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+          }
+          .print-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+          }
+          .print-button:hover {
+            background: #2563eb;
+          }
+          @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 20px; }
+            .print-button { display: none; }
+          }
+          .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <button class="print-button" onclick="window.print()">🖨️ Print Report</button>
+
+          <div class="header">
+            <h1>📊 Sales Analytics Report</h1>
+            <div class="report-info">
+              <p><strong>Period:</strong> ${reportData.filters.dateRange.start} to ${reportData.filters.dateRange.end}</p>
+              <p><strong>Branch:</strong> ${reportData.filters.branch}</p>
+              <p><strong>Status Filter:</strong> ${reportData.filters.status}</p>
+              <p><strong>Generated:</strong> ${format(new Date(), 'MMMM dd, yyyy - hh:mm a')}</p>
+            </div>
+          </div>
+
+          <div class="summary-cards">
+            <div class="card green">
+              <div class="card-title">Total Revenue</div>
+              <div class="card-value">${formatCurrency(reportData.summary.totalRevenue)}</div>
+            </div>
+            <div class="card blue">
+              <div class="card-title">Total Orders</div>
+              <div class="card-value">${reportData.summary.totalOrders.toLocaleString()}</div>
+            </div>
+            <div class="card orange">
+              <div class="card-title">Average Order Value</div>
+              <div class="card-value">${formatCurrency(reportData.summary.averageOrderValue)}</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Products Sold</div>
+              <div class="card-value">${reportData.summary.topProductsCount}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">🏆 Top Products by Sales</h2>
+            <p style="margin-bottom: 15px; color: #6b7280;">
+              These are the best-performing products during the selected period, ranked by total revenue.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 60px;">Rank</th>
+                  <th>Product Name</th>
+                  <th class="text-right">Quantity Sold</th>
+                  <th class="text-right">Total Revenue</th>
+                  <th class="text-right">Avg. Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportData.topProducts.map((product, index) => `
+                  <tr>
+                    <td>
+                      <span class="rank ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}">${index + 1}</span>
+                    </td>
+                    <td>
+                      <strong>${product.name}</strong>
+                      ${index < 3 ? '<span class="highlight">Top Seller</span>' : ''}
+                    </td>
+                    <td class="text-right">${product.quantity.toLocaleString()}</td>
+                    <td class="text-right"><strong>${formatCurrency(product.revenue)}</strong></td>
+                    <td class="text-right">${formatCurrency(product.revenue / product.quantity)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          ${reportData.dailySales && reportData.dailySales.length > 0 ? `
+          <div class="section">
+            <h2 class="section-title">📅 Daily Sales Breakdown</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th class="text-right">Number of Orders</th>
+                  <th class="text-right">Total Revenue</th>
+                  <th class="text-right">Avg. per Order</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportData.dailySales.map(day => `
+                  <tr>
+                    <td><strong>${format(new Date(day.date), 'MMMM dd, yyyy')}</strong></td>
+                    <td class="text-right">${day.orders.toLocaleString()}</td>
+                    <td class="text-right"><strong>${formatCurrency(day.revenue)}</strong></td>
+                    <td class="text-right">${formatCurrency(day.revenue / day.orders)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+
+          ${reportData.branchSales && reportData.branchSales.length > 1 ? `
+          <div class="section">
+            <h2 class="section-title">🏢 Branch Performance</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Branch Name</th>
+                  <th class="text-right">Total Orders</th>
+                  <th class="text-right">Total Revenue</th>
+                  <th class="text-right">Avg. per Order</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportData.branchSales.map(branch => `
+                  <tr>
+                    <td><strong>${branch.name}</strong></td>
+                    <td class="text-right">${branch.orders.toLocaleString()}</td>
+                    <td class="text-right"><strong>${formatCurrency(branch.revenue)}</strong></td>
+                    <td class="text-right">${formatCurrency(branch.revenue / branch.orders)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>This report was automatically generated by the DK-Admin Analytics System</p>
+            <p style="margin-top: 5px;">© ${new Date().getFullYear()} - All Rights Reserved</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Open report in new tab
+    const reportWindow = window.open('', '_blank');
+    if (reportWindow) {
+      reportWindow.document.write(reportHTML);
+      reportWindow.document.close();
+    } else {
+      alert('Please allow pop-ups to view the report');
+    }
   };
 
   return (

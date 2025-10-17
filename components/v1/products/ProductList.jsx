@@ -5,7 +5,7 @@ import DataTable from './DataTable'
 import { Button } from '@/components/ui/button'
 import { getProductsWithAllData } from '@/services/pocketbase/readProducts'
 
-const ProductList = ({ searchQuery = "", onDataChanged, onSearchChange, userRole }) => {
+const ProductList = ({ searchQuery = "", onDataChanged, onSearchChange, userRole, refreshTrigger }) => {
   // State for product data
   const [productData, setProductData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -40,36 +40,45 @@ const ProductList = ({ searchQuery = "", onDataChanged, onSearchChange, userRole
   const [tableInstance, setTableInstance] = useState(null)
 
   // Flag to force refresh data (after create/update/delete operations)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [internalRefreshTrigger, setInternalRefreshTrigger] = useState(0)
 
   // Fetch product data directly from the service
   useEffect(() => {
     const fetchProducts = async () => {
+      console.log('🔍 Fetching products... (Trigger:', refreshTrigger, ', Internal:', internalRefreshTrigger, ')');
       setIsLoading(true);
       try {
         // Fetch products with their relations using our simplified function
         const result = await getProductsWithAllData(page, perPage, searchQuery);
 
-        // Transform data for the table
-        const transformedData = result.items.map(product => ({
-          id: product.id,
-          name: product.product_name,
-          model: product.product_model,
-          brand: product.brand,
-          stock: product.stock?.stock_quantity || 0,
-          price: product.pricing?.final_price || 0,
-          basePrice: product.pricing?.base_price || 0,
-          discount: product.pricing?.discount || 0,
-          image: product.image ? `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/${product.collectionId}/${product.id}/${product.image}` : "/Images/default_user.jpg",
-          category: product.brand, // Using brand as category for now
-          specifications: product.specifications || null,
-          warranty: product.warranty || null,
-        }));
+        console.log('📦 Raw result from getProductsWithAllData:', result);
 
+        // Transform data for the table
+        const transformedData = result.items.map(product => {
+          const stockQuantity = product.stock?.stock_quantity || 0;
+          console.log(`Product ${product.product_name}: stock_quantity =`, stockQuantity);
+
+          return {
+            id: product.id,
+            name: product.product_name,
+            model: product.product_model,
+            brand: product.brand,
+            stock: stockQuantity,
+            price: product.pricing?.final_price || 0,
+            basePrice: product.pricing?.base_price || 0,
+            discount: product.pricing?.discount || 0,
+            image: product.image ? `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/${product.collectionId}/${product.id}/${product.image}` : "/Images/default_user.jpg",
+            category: product.brand, // Using brand as category for now
+            specifications: product.specifications || null,
+            warranty: product.warranty || null,
+          };
+        });
+
+        console.log('✅ Transformed data:', transformedData);
         setProductData(transformedData);
         setTotalPages(result.totalPages);
       } catch (err) {
-        console.error('Error fetching products:', err);
+        console.error('❌ Error fetching products:', err);
         setError(err.message);
       } finally {
         setIsLoading(false);
@@ -77,7 +86,7 @@ const ProductList = ({ searchQuery = "", onDataChanged, onSearchChange, userRole
     };
 
     fetchProducts();
-  }, [page, perPage, searchQuery, refreshTrigger]);
+  }, [page, perPage, searchQuery, internalRefreshTrigger, refreshTrigger]);
 
   // Client-side filtering based on category
   const filteredProducts = useMemo(() => {
@@ -135,10 +144,11 @@ const ProductList = ({ searchQuery = "", onDataChanged, onSearchChange, userRole
 
   // Handle product data changes (create/update/delete)
   const handleDataChanged = () => {
+    console.log('🔄 Data changed in ProductList, triggering internal refresh...');
     // Reset row selection
     setRowSelection({});
     // Force refresh by incrementing the trigger value
-    setRefreshTrigger(prev => prev + 1);
+    setInternalRefreshTrigger(prev => prev + 1);
     // Reset to first page when data changes
     setPage(1);
 
