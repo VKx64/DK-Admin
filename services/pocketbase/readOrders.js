@@ -76,6 +76,7 @@ export async function getOrdersByRole(user) {
       }
 
       // Create filter for the admin's assigned branch(es)
+      // This will show ALL orders from the admin's branch, regardless of who created them
       const branchFilter = accessibleBranches.map(branchId => `branch = "${branchId}"`).join(' || ');
 
       console.log(`🔍 Admin filtering orders by branch(es): ${accessibleBranches.join(', ')}`);
@@ -84,10 +85,12 @@ export async function getOrdersByRole(user) {
       result = await pb.collection("user_order").getFullList({
         filter: branchFilter,
         expand: 'user,address,branch,assigned_technician,products,product_pricing',
-        requestKey: null
+        requestKey: null,
+        sort: '-created', // Show newest orders first
       });
 
       console.log(`✅ Admin retrieved ${result.length} orders from their branch(es)`);
+      console.log(`📋 This includes orders created by admin for on-store customers`);
 
       // Additional debugging: show which branches the retrieved orders belong to
       if (result.length > 0) {

@@ -130,8 +130,12 @@ const DataTable = ({
       id: "customerName",
       header: () => <div className="text-left font-medium">Customer</div>,
       cell: ({ row }) => {
-        // Check for guest user first, then fallback to registered user or a default
-        const customerName = row.original.guest_user || row.original.expand?.user?.name || "N/A";
+        // Check for guest user first, then fallback to registered user
+        // For on-store orders created by admin, show the address name if available
+        const customerName = row.original.guest_user ||
+                            row.original.expand?.user?.name ||
+                            row.original.expand?.address?.name ||
+                            "Walk-in Customer";
         return <div className="text-left">{customerName}</div>;
       },
       size: 150, // Adjusted size slightly for potentially longer names
@@ -401,7 +405,7 @@ const DataTable = ({
     if (paymentMethod === "Cash On Delivery") {
       return ["Pending", "Declined", "Approved", "packing", "ready_for_delivery", "on_the_way", "completed"];
     } else if (paymentMethod === "On-Store") {
-      return ["Pending", "Declined", "Approved", "ready_for_pickup"];
+      return ["Pending", "Declined", "Approved", "ready_for_pickup", "completed"];
     }
     return ["Pending", "Declined", "Approved"]; // Default options
   };
